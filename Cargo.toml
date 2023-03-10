@@ -1,0 +1,23 @@
+[package]
+name = "rkd"
+version = "3.0.0"
+authors = ["luxagen <rotkraken@luxagen.com>"]
+homepage = "http://www.luxagen.com/product/rotkraken"
+#repository = ""
+license = "GPL-3.0-or-later"
+#keywords = ""
+#categories = ""
+edition = "2021"
+
+[dependencies]
+hex = "0.4"
+nom = "7.1.3"
+lazy_static = "1.4.0"
+
+[dependencies.clap]
+version = "4.1.11"
+features = ["cargo", "derive"]
+
+[dependencies.unix-ts]
+version = "0.4.1"
+features = ["chrono"]
