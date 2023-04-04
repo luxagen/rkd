@@ -230,18 +230,16 @@ impl FSNode
 
 				if !disable
 				{
-					let len=prefix_match_len(src.path.chars(),self.path.chars());
+					let len=prefix_match_len(src.path.chars(),self.path.chars()); // Find common path prefix
 
+					// Get rid of any common terminal-name prefix match to get a valid ancestor path
 					let pos = match self.path[0..len].rfind('/')
 					{
 						Some(x) => 1+x,
 						None => 0,
 					};
 
-					// now use std::string::rfind to find the position of the last slash preceding that number
-					// That's the new cutoff - truncate one of the strings to that length and use for common prefix; slice both at pos+1 to get suffixes
-					// Print all
-
+					// Print common ancestor and then each path relative to that
 					writeln!(
 						lock,
 						"{verb} '{}'\t'{}'\t'{}'",
@@ -370,21 +368,23 @@ impl RKD
 
 		for obj in self.hashes.values()
 		{
+			// Build a reference list for RHS, excluding done items (i.e. make a "to report on" list)
 			let mut pathsR = obj.sides[1].paths.iter()
 				.filter(|nodeR| !nodeR.is_done())
 				.collect::<Vec<_>>();
 
 			if pathsR.is_empty() {continue}
 
-			sort_revpath(&mut pathsR);
-
+			// Build a reference list for LHS, including done items (i.e. make a "possible cp/mv sources" list)
 			let mut pathsL = obj.sides[0].paths.iter().collect::<Vec<_>>();
 
 			if pathsL.is_empty() {continue}
 
+			// Sort both lists by path suffix for good cp/mv matching
+			sort_revpath(&mut pathsR);
 			sort_revpath(&mut pathsL);
 
-			let mut itL = VecIterator::new(&pathsL);
+			let mut itL = VecIterator::new(&pathsL); // Iterator for following the RHS item on the left (like merge sort)
 
 			for nodeR in pathsR
 			{
