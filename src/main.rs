@@ -123,7 +123,7 @@ fn fsnode_open(path: &str) -> Box<dyn std::io::Read>
 		{return Box::new(std::fs::File::open(path).unwrap());}
 
 	let mut rk = Command::new("sudo");
-	rk.args(["rk","-urei",path]);
+	rk.args(["/vcs/bin/rk3","-urei",path]);
 	rk.stdin(Stdio::null());
 	rk.stdout(Stdio::piped());
 
