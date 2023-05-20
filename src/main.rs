@@ -122,6 +122,9 @@ fn fsnode_open(path: &str) -> Box<dyn std::io::Read>
 {
 	use std::process::{Command,Stdio};
 
+	if "-"==path
+		{return Box::new(io::stdin().lock());}
+
 	if !std::fs::metadata(path).unwrap().is_dir()
 		{return Box::new(std::fs::File::open(path).unwrap());}
 
@@ -144,6 +147,12 @@ lazy_static!
 fn main()
 {
 	let mut rkd = RKD::new();
+
+	if "-" == args.treeL  &&  "-" == args.treeR
+	{
+		eprintln!("Cannot compare stdin with itself!");
+		std::process::exit(3);
+	}
 
 	// Pre-open both early so we can fail fast on bad arguments
 	let (fileL,fileR) = (fsnode_open(&args.treeL),fsnode_open(&args.treeR));
