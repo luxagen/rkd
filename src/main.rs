@@ -1,7 +1,6 @@
 #![allow(nonstandard_style)]
 
 use std::io::{self,BufRead};
-use std::rc::Rc;
 use std::collections::HashMap;
 
 static DISABLE_OUTPUT: bool = false;
@@ -88,16 +87,17 @@ impl Drop for ScopeTimer
 	}
 }
 
+#[derive(Clone)]
 struct FSNode
 {
 	hash: Hash,
-	path: String,
+	path: &'static str,
 	done: std::cell::Cell<bool>,
 }
 
 struct Side
 {
-	paths: Vec<Rc<FSNode>>,
+	paths: Vec<&'static FSNode>,
 }
 
 struct Object
@@ -106,7 +106,7 @@ struct Object
 	sides: [Side;2],
 }
 
-type MapPaths = HashMap<String,Rc<FSNode>>;
+type MapPaths = HashMap<&'static str,&'static FSNode>;
 type MapHashes = HashMap<Hash,Object>;
 
 struct RKD
@@ -141,10 +141,22 @@ lazy_static!
 	static ref args: Args = <Args as clap::Parser>::parse();
 }
 
+fn slurp_log(stream: Box<dyn std::io::Read>) -> Vec<&'static str>
+{
+	let _timer = ScopeTimer::new(args.timings,"slurp_log");
+
+	let mut log: Vec<&str> = vec!();
+
+	for line in std::io::BufReader::new(stream).lines()
+	{
+		log.push(Box::leak(line.unwrap().into_boxed_str()));
+	}
+
+	log
+}
+
 fn main()
 {
-	let mut rkd = RKD::new();
-
 	if "-" == args.treeL  &&  "-" == args.treeR
 	{
 		eprintln!("Cannot compare stdin with itself!");
@@ -154,12 +166,13 @@ fn main()
 	// Pre-open both early so we can fail fast on bad arguments
 	let (fileL,fileR) = (fsnode_open(&args.treeL),fsnode_open(&args.treeR));
 
-	rkd.add_log(fileL,&args.exclude);
-	rkd.add_log(fileR,&args.exclude);
+	let (logL,logR) = (slurp_log(fileL),slurp_log(fileR));
+
+	let mut rkd = RKD::new();
 
 	// exit() is here to prevent destructors from being run, which adds a second or two to runtime
 	std::process::exit(
-		rkd.diff());
+		rkd.diff(&logL,&logR));
 }
 
 enum FSOp<'a>
@@ -172,27 +185,25 @@ enum FSOp<'a>
 
 impl FSNode
 {
-	fn new(path: &str,hash: Hash) -> Rc<Self>
+	fn new(path: &'static str,hash: Hash) -> Self
 	{
-		Rc::new(
-			FSNode
-			{
-				path: path.to_owned(),
-				hash,
-				done: std::cell::Cell::new(false),
-			}
-		)
+		FSNode
+		{
+			path,
+			hash,
+			done: std::cell::Cell::new(false),
+		}
 	}
 
-	fn new_or_recycle(path: &str,hash: Hash,otherSide: &mut MapPaths) -> Rc<Self>
+	fn new_or_recycle(path: &'static str,hash: Hash,otherSide: &mut MapPaths) -> Self
 	{
-		if let Some(o) = otherSide.get_mut(path)
+		if let Some(o) = otherSide.get(path)
 		{
 			if hash == o.hash
 			{
 				// Identical to an item on the other side: recycle and set done
 				o.set_done();
-				return o.clone();
+				return (*o).clone();
 			}
 		}
 
@@ -306,16 +317,13 @@ impl RKD
 		}
 	}
 
-	fn add_log(&mut self,stream: Box<dyn std::io::Read>,excludes: &[String])
+	fn diff(&mut self,logL: &Vec<&str>,logR: &Vec<&str>) -> i32
 	{
-		assert!(self.sides.len() < 2);
+		assert_eq!(self.sides.len(),0);
 
-		let side = self.parse_log(stream,excludes);
-		self.sides.push(side);
-	}
+		self.parse_side(&logL,&args.exclude);
+		self.parse_side(&logR,&args.exclude);
 
-	fn diff(&self) -> i32
-	{
 		assert_eq!(self.sides.len(),2);
 
 		self.diff_cpmv();
@@ -353,7 +361,7 @@ impl RKD
 		}
 	}
 
-	fn match_right<'a>(itL: &'a mut VecIterator<&Rc<FSNode>>,nodeR: &Rc<FSNode>) -> &'a Rc<FSNode>
+	fn match_right<'a>(itL: &'a mut VecIterator<&FSNode>,nodeR: &FSNode) -> &'a FSNode
 	{
 		while let Some(nodeL) = itL.curr()
 		{
@@ -385,13 +393,13 @@ impl RKD
 		{
 			// Build a reference list for RHS, excluding done items (i.e. make a "to report on" list)
 			let mut pathsR = obj.sides[1].paths.iter()
-				.filter(|nodeR| !nodeR.is_done())
+				.filter_map(|nodeR| if !nodeR.is_done() {Some(*nodeR)} else {None})
 				.collect::<Vec<_>>();
 
 			if pathsR.is_empty() {continue}
 
 			// Build a reference list for LHS, including done items (i.e. make a "possible cp/mv sources" list)
-			let mut pathsL = obj.sides[0].paths.iter().collect::<Vec<_>>();
+			let mut pathsL = obj.sides[0].paths.iter().map(|nodeL| *nodeL).collect::<Vec<_>>();
 
 			if pathsL.is_empty() {continue}
 
@@ -409,7 +417,7 @@ impl RKD
 		}
 	}
 
-	fn make_node(&mut self,side: usize,path: &str,hash: Hash) -> Rc<FSNode>
+	fn make_node(&mut self,side: usize,path: &'static str,hash: Hash) -> FSNode
 	{
 		debug_assert!(side<2);
 
@@ -433,8 +441,10 @@ impl RKD
 		result
 	}
 
-	fn parse_log(&mut self,stream: Box<dyn std::io::Read>,excludes: &[String]) -> MapPaths
+	fn parse_side(&mut self,log: &Vec<&str>,excludes: &[String])
 	{
+		assert!(self.sides.len() < 2);
+
 		let _timer = ScopeTimer::new(args.timings,"parse_log");
 
 		let side = self.sides.len();
@@ -443,9 +453,9 @@ impl RKD
 
 		let mut files = MapPaths::new();
 
-		'line_parser: for line in std::io::BufReader::new(stream).lines()
+		'line_parser: for line in log 
 		{
-			let parsed = LogLine::parse(&line.unwrap()).unwrap().1;
+			let parsed = LogLine::parse(&line).unwrap().1;
 
 			for substr in excludes
 			{
@@ -455,17 +465,19 @@ impl RKD
 				}
 			}
 
-			let node = self.make_node(
-				side,
-				&parsed.path,
-				parsed.hash.clone()); // TODO improve
+			let node = Box::leak(
+				Box::new(
+					self.make_node(
+						side,
+						&parsed.path,
+						parsed.hash.clone()))); // TODO improve
 
-			files.insert(parsed.path.to_string(),node.clone());
+			files.insert(parsed.path,node);
 
 			Self::make_hash_entry(&mut self.hashes,&parsed.hash,parsed.by).sides[side].paths.push(node);
 		}
 
-		files
+		self.sides.push(files);
 	}
 }
 
@@ -473,7 +485,7 @@ struct LogLine
 {
 	by: u64,
 	hash: Hash,
-	path: String,
+	path: &'static str,
 }
 
 fn hexhash(input: &str) -> nom::IResult<&str,Hash>
@@ -530,15 +542,28 @@ impl LogLine
 			{
 				by: fields.0,
 				hash: fields.1,
-				path: fields.2.to_string(),
+				path: unsafe_dup_str(fields.2),
 			},
 		))
 	}
 }
 
+fn unsafe_dup_slice<T>(s: &[T]) -> &'static [T]
+{
+	unsafe
+	{
+		std::slice::from_raw_parts(s.as_ptr(),s.len())
+	}
+}
+
+fn unsafe_dup_str(s: &str) -> &'static str
+{
+	std::str::from_utf8(unsafe_dup_slice(s.as_bytes())).unwrap()
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
-fn sort_revpath(v: &mut [&Rc<FSNode>])
+fn sort_revpath(v: &mut [&FSNode])
 {
 	v.sort_by(|l,r|
 		l.path.as_bytes().iter().rev().cmp(r.path.as_bytes().iter().rev()));
