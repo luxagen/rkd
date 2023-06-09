@@ -245,8 +245,12 @@ impl FSNode
 			},
 			FSOp::CopyMove{src} =>
 			{
+				assert_ne!(src.path,self.path);
+
 				// If paths match, neither must be done and it's a MV
-				let verb  =  if src.is_done() {"CP"} else {src.set_done(); "MV"};
+				let copy = if src.is_done() {true} else {src.set_done(); false};
+
+				let verb  =  if copy {"CP"} else {"MV"};
 
 				if !disable
 				{
