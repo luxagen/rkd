@@ -388,12 +388,12 @@ impl RKD
 			// Build a reference list for RHS, excluding done items (i.e. make a "to report on" list)
 			let mut pathsR = obj.sides[1].paths.iter()
 				.filter_map(|nodeR| if !nodeR.is_done() {Some(*nodeR)} else {None})
-				.collect::<Vec<&FSNode>>();
+				.collect::<Vec<_>>();
 
 			if pathsR.is_empty() {continue}
 
 			// Build a reference list for LHS, including done items (i.e. make a "possible cp/mv sources" list)
-			let mut pathsL = obj.sides[0].paths.iter().map(|nodeL| *nodeL).collect::<Vec<&FSNode>>();
+			let mut pathsL = obj.sides[0].paths.iter().map(|nodeL| *nodeL).collect::<Vec<_>>();
 
 			if pathsL.is_empty() {continue}
 
