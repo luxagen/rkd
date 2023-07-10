@@ -3,17 +3,6 @@
 version = 3
 
 [[package]]
-name = "RKDiff"
-version = "3.0.0"
-dependencies = [
- "clap",
- "hex",
- "lazy_static",
- "nom",
- "unix-ts",
-]
-
-[[package]]
 name = "android_system_properties"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -401,6 +390,17 @@ name = "readme-rustdocifier"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08ad765b21a08b1a8e5cdce052719188a23772bcbefb3c439f0baaf62c56ceac"
+
+[[package]]
+name = "rkd"
+version = "3.0.0"
+dependencies = [
+ "clap",
+ "hex",
+ "lazy_static",
+ "nom",
+ "unix-ts",
+]
 
 [[package]]
 name = "rustix"
