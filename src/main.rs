@@ -427,7 +427,7 @@ impl RKD
 		debug_assert!(side<2);
 
 		if side>0
-			{return FSNode::clone_or_new(path,hash,&mut self.sides[0])}
+			{FSNode::clone_or_new(path,hash,&mut self.sides[0])}
 		else
 			{FSNode::new(path,hash)}
 	}
