@@ -493,7 +493,17 @@ struct LogLine
 	path: &'static str,
 }
 
-fn hex_hash(input: &str) -> nom::IResult<&str,Hash>
+fn hexhash_good(input: &str) -> nom::IResult<&str,&str>
+{
+	const count: usize = 32;
+
+	nom::bytes::complete::take_while_m_n(
+		count,
+		count,
+		|c: char| c.is_ascii_hexdigit())(input)
+}
+
+fn hexhash(input: &str) -> nom::IResult<&str,Hash>
 {
 	const count: usize = 32;
 
@@ -509,12 +519,11 @@ fn hex_hash(input: &str) -> nom::IResult<&str,Hash>
 		return Err(Failure(ParseError::from_error_kind(input,HexDigit)));
 	}
 
-	let (_,strHash) = nom::combinator::all_consuming(
-		nom::character::complete::hex_digit1)(&input[0..count])?;
+	let (r,strHash) = hexhash_good(&input)?;
 
 	Ok(
 		(
-			&input[count..],
+			r,
 			Hash::new(strHash),
 		)
 	)
@@ -535,7 +544,7 @@ impl LogLine
 			tuple(
 				(
 					preceded(space0,u64),
-					preceded(tag("  "),hex_hash),
+					preceded(tag("  "),hexhash),
 					preceded(tag("  "),preceded(opt(tag("./")),not_line_ending)),
 				)
 			)
