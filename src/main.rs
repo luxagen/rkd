@@ -497,16 +497,13 @@ fn hex_hash(input: &str) -> nom::IResult<&str,Hash>
 {
 	const count: usize = 32;
 
-	use nom::
-	{
-		Err::Failure,
-		error::{ParseError},
-		error::ErrorKind::*,
-	};
-
 	if input.len() < count
 	{
-		return Err(Failure(ParseError::from_error_kind(input,HexDigit)));
+		return Err(
+			nom::Err::Failure(
+				nom::error::ParseError::from_error_kind(
+					input,
+					nom::error::ErrorKind::HexDigit)));
 	}
 
 	let (_,strHash) = nom::combinator::all_consuming(
