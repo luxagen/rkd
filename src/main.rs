@@ -93,7 +93,7 @@ impl Drop for ScopeTimer
 #[derive(Clone)]
 struct FSNode
 {
-	hash: Hash,
+	hash: Option<Hash>,
 	path: &'static str,
 	done: std::cell::Cell<bool>,
 }
@@ -188,7 +188,7 @@ enum FSOp<'a>
 
 impl FSNode
 {
-	fn new(path: &'static str,hash: Hash) -> Self
+	fn new(path: &'static str,hash: Option<Hash>) -> Self
 	{
 		FSNode
 		{
@@ -202,9 +202,9 @@ impl FSNode
 	{
 		if let Some(o) = otherSide.get(path)
 		{
-			if hash == o.hash
+			if o.hash == Some(hash)
 			{
-				// Identical to an item on the other side: recycle and set done
+				// Hashable and identical to an item on the other side: recycle and set done
 				o.set_done();
 				return Some((*o).clone());
 			}
@@ -217,7 +217,7 @@ impl FSNode
 	{
 		if let Some(rr) = Self::try_recycle(path,hash,otherSide) {return rr;}
 
-		Self::new(path,hash)
+		Self::new(path,Some(hash))
 	}
 
 	fn is_done(&self) -> bool
@@ -331,13 +331,20 @@ impl RKD
 	{
 		assert_eq!(self.sides.len(),0);
 
-		self.parse_side(&logL,&args.exclude);
-		self.parse_side(&logR,&args.exclude);
+		let mut ambiguousFileCountL=0;
+		let mut ambiguousFileCountR=0;
+		self.parse_side(&logL,&args.exclude,&mut ambiguousFileCountL);
+		self.parse_side(&logR,&args.exclude,&mut ambiguousFileCountR);
 
 		assert_eq!(self.sides.len(),2);
 
 		self.diff_cpmv();
 		self.diff_remaining();
+
+		if ambiguousFileCountL>0 || ambiguousFileCountR>0
+		{
+			eprintln!("[WARNING] Ambiguous files: < {}, > {}",ambiguousFileCountL,ambiguousFileCountR);
+		}
 
 		0
 	}
@@ -360,7 +367,10 @@ impl RKD
 				continue;
 			}
 
-			debug_assert_ne!(nodeL.hash,nodeR_.unwrap().hash);
+			if let (Some(hL),Some(hR)) = (nodeL.hash,nodeR_.unwrap().hash)
+			{
+				debug_assert_ne!(hL,hR); // hash-based matching should already have disposed of this match
+			}
 
 			nodeL.report(DISABLE_OUTPUT,&FSOp::Modify{lhs: nodeR_.unwrap()});
 		}
@@ -427,14 +437,19 @@ impl RKD
 		}
 	}
 
-	fn make_node(&mut self,side: usize,path: &'static str,hash: Hash) -> FSNode
+	fn make_node(&mut self,side: usize,path: &'static str,hash: Option<Hash>) -> FSNode
 	{
 		debug_assert!(side<2);
 
-		if side>0
-			{FSNode::clone_or_new(path,hash,&mut self.sides[0])}
-		else
-			{FSNode::new(path,hash)}
+		if let Some(h) = hash // Cloning sets done, so don't do it for unhashables
+		{
+			if side>0
+			{
+				return FSNode::clone_or_new(path,h,&mut self.sides[0]);
+			}
+		}
+
+		FSNode::new(path,hash)
 	}
 
 	fn insert_hash_entry<'a>(hashes: &'a mut MapHashes,hash: &Hash,by: u64) -> &'a mut Object
@@ -451,7 +466,7 @@ impl RKD
 		result
 	}
 
-	fn parse_side(&mut self,log: &Vec<&str>,excludes: &[String])
+	fn parse_side(&mut self,log: &Vec<&str>,excludes: &[String],ambiguousFileCount: &mut usize)
 	{
 		assert!(self.sides.len() < 2);
 
@@ -465,7 +480,7 @@ impl RKD
 
 		'line_parser: for line in log 
 		{
-			let parsed = LogLine::parse(&line).unwrap().1;
+			let parsed = LogLine::parse(&line,ambiguousFileCount,side).unwrap().1;
 
 			for substr in excludes
 			{
@@ -484,7 +499,12 @@ impl RKD
 
 			files.insert(parsed.path,node);
 
-			Self::insert_hash_entry(&mut self.hashes,&parsed.hash,parsed.by).sides[side].paths.push(node);
+			// An item with a pseudohash can't be entered into our hash-keyed map, which disables move/rename matching
+			if let Some(hash) = parsed.hash
+			{
+				let entry = Self::insert_hash_entry(&mut self.hashes,&hash,parsed.by);
+				entry.sides[side].paths.push(node);
+			}
 		}
 
 		self.sides.push(files);
@@ -494,11 +514,58 @@ impl RKD
 struct LogLine
 {
 	by: u64,
-	hash: Hash,
+	hash: Option<Hash>,
 	path: &'static str,
 }
 
-fn hexhash(input: &str) -> nom::IResult<&str,Hash>
+fn hexhash_good(input: &str) -> nom::IResult<&str,&str>
+{
+	const count: usize = 32;
+
+	nom::bytes::complete::take_while_m_n(
+		count,
+		count,
+		|c: char| c.is_ascii_hexdigit())(input)
+}
+
+fn hexhash_bad(input: &str) -> nom::IResult<&str,char>
+{
+	const count: usize = 32;
+
+	use nom::
+	{
+		sequence::tuple,
+		combinator::value,
+		character::complete::*,
+		combinator::map,
+	};
+
+	fn initial_char(input: &str) -> nom::IResult<&str,char>
+	{
+		if let Some(c) = input.chars().next()
+		{
+			if c.is_alphabetic() || '-'==c
+			{
+				return Ok((&input[1..],c));
+			}
+		}
+
+		Err(
+			nom::Err::Error(
+				nom::error::Error::new(
+					input,
+					nom::error::ErrorKind::Verify)))
+	}
+
+	map(
+		tuple((
+			value((),nom::multi::count(char('-'),count-1)), // Assert the presence of `count-1` dashes
+			initial_char, // Match an alphabetic string
+		)),
+		|(_,alpha)| alpha)(input) // Extract the first character of `alpha1`
+}
+
+fn hexhash(input: &str) -> nom::IResult<&str,Option<Hash>>
 {
 	const count: usize = 32;
 
@@ -514,20 +581,23 @@ fn hexhash(input: &str) -> nom::IResult<&str,Hash>
 		return Err(Failure(ParseError::from_error_kind(input,HexDigit)));
 	}
 
-	let (_,strHash) = nom::combinator::all_consuming(
-		nom::character::complete::hex_digit1)(&input[0..count])?;
-
-	Ok(
-		(
-			&input[count..],
-			Hash::new(strHash),
-		)
-	)
+	match hexhash_good(&input)
+	{
+		Ok((r,strHash)) => Ok((r,Some(Hash::new(strHash)))),
+		Err(_) => match hexhash_bad(&input)
+		{
+			Ok((r,_sc)) =>
+			{
+				Ok((r,None))
+			},
+			Err(e) => Err(e),
+		},
+	}
 }
 
 impl LogLine
 {
-	fn parse(input: &str) -> nom::IResult<&str,Self>
+	fn parse<'a>(input: &'a str,ambiguousFileCount: &mut usize,side: usize) -> nom::IResult<&'a str,Self>
 	{
 		use nom::{
 			sequence::*,
@@ -546,12 +616,25 @@ impl LogLine
 			)
 		)(input)?;
 
+		let hash = fields.1;
+
+		if hash.is_none()
+		{
+			eprintln!(
+				"[WARNING] Missing hash [{}]: {}",
+				if side>0 {">"} else {"<"},
+				fields.2,
+			);
+
+			*ambiguousFileCount += 1;
+		}
+
 		Ok((
 			rest,
 			LogLine
 			{
 				by: fields.0,
-				hash: fields.1,
+				hash,
 				path: unsafe_dup_str(fields.2),
 			},
 		))
