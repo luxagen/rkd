@@ -1,0 +1,158 @@
+CP '/btr/'	'a/x/unknown WhatsApp Voice Notes/.nomedia'	'int/backup/phone/jphone/WhatsApp/Media/.Statuses/.nomedia'
+CP '/btr/int/backup/phone/jphone/Telegram/'	'Telegram Documents/4_6029263734231270530.mp4'	'Telegram Files/that's-all-folks.mp4'
+CP '/btr/int/backup/phone/jphone/WhatsApp/.Shared/'	'vqjojaJbLPjEr5rfAI5+V3LRkI7nrdKS2lDeMFusj2c=.tmp.chck'	'4rDR66fCASF5f9EBQl3O2JHIjLWHMsscRbH76AwcDCo=.tmp.chck'
+CP '/btr/int/@home/'	'git/.cache/tracker/meta.db-shm'	'autobot/.cache/tracker/meta.db-shm'
+CP '/btr/int/@home/'	'git/.cache/tracker/meta.db-wal'	'autobot/.cache/tracker/meta.db-wal'
+CP '/btr/int/@home/'	'git/.cache/tracker/no-need-mtime-check.txt'	'autobot/.cache/tracker/no-need-mtime-check.txt'
+CP '/btr/int/@home/luxagen/.kodi/userdata/Thumbnails/'	'3/3f41acb1.jpg'	'b/bfed563d.jpg'
+CP '/btr/int/@home/luxagen/.kodi/userdata/Thumbnails/'	'c/c62b4c85.jpg'	'4/4687b609.jpg'
+CP '/btr/int/vcs/infra/'	'rk-rust/target/debug/incremental/fswalk-1efx83kfe90xx/s-glgys9xhol-17kd1th.lock'	'rkd/target/debug/incremental/rkd-2lk13hrkk1q0p/s-h3sr85uzwq-2tn7xh.lock'
+CP '/btr/int/vcs/infra/'	'tg-send/target/debug/incremental/lux_ops-1om2tnkh26p2w/s-gmn2m9y932-10zx8j3.lock'	'rkd/target/debug/incremental/rkd-2lk13hrkk1q0p/s-h3sr8aqpmi-10tmrh2.lock'
+CP '/btr/int/vcs/infra/'	'tg-send/target/release/build/rand_chacha-8490e9fb09750be4/invoked.timestamp'	'rkd/target/debug/.fingerprint/rkd-8bf8a330efd3bbe4/invoked.timestamp'
+CR /btr/int/backup/phone/jphone/Android/data/net.oneplus.weather/cache/log/OPWeather_Log-2025-01-18.txt
+CR /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/1_4963295225511412281.tgs
+CR /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/1_5127358831575171742.tgs
+CR /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/1_5129721261156467513.tgs
+CR /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/2_1269403972611866933.tgs
+CR /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/2_234944112774611819.tgs
+CR /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/-5768150235854517082_121.jpg
+CR /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/-5784194116253497235_109.jpg
+CR /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/-5790919141685835323_109.jpg
+CR /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/-5790919141685835323_121.jpg
+CR /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/-5792007482103678450_109.jpg
+CR /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/-5792007482103678451_109.jpg
+CR /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/-5792007482103678452_109.jpg
+CR /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/-5793046305843557934_121.jpg
+CR /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/-5793139841641330547_120.jpg
+CR /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/acache/1_5041975006284744178.tgs_157_157 .pcache2
+CR /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/acache/1_5042126055989576783.tgs_157_157 .pcache2
+CR /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/acache/1_5042236187540980796.tgs_157_157 .pcache2
+CR /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/acache/1_5044183478468346945.tgs_157_157 .pcache2
+CR /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/acache/1_5098493726473323040.tgs_210_210_nolimit.pcache2
+CR /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/IMG_20250118_161057_614.jpg
+CR /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/IMG_20250118_161303_500.jpg
+CR /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/IMG_20250118_161311_008.jpg
+CR /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/IMG_20250118_161606_066.jpg
+CR /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/IMG_20250118_161819_252.jpg
+CR /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/IMG_20250118_170258_580.jpg
+CR /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/IMG_20250118_170311_052.jpg
+CR /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/IMG_20250118_170321_066.jpg
+CR /btr/int/backup/phone/jphone/com.fragileheart.recorder/250118-044110-weather.mp3
+CR /btr/int/backup/phone/jphone/Telegram/Telegram Audio/4_5791929721264544122.ogg
+CR /btr/int/backup/phone/jphone/Telegram/Telegram Audio/4_5791929721264544124.ogg
+CR /btr/int/backup/phone/jphone/Telegram/Telegram Audio/4_5791929721264544125.ogg
+CR /btr/int/backup/phone/jphone/Telegram/Telegram Audio/4_5791929721264544126.ogg
+CR /btr/int/backup/phone/jphone/Telegram/Telegram Audio/4_5792078417327299561.ogg
+CR /btr/int/backup/phone/jphone/Telegram/Telegram Audio/4_5793885743860422492.ogg
+CR /btr/int/backup/phone/jphone/Telegram/Telegram Images/-5768150235854517082_121.jpg
+CR /btr/int/backup/phone/jphone/Telegram/Telegram Images/-5791926680883940259_121.jpg
+CR /btr/int/backup/phone/jphone/Telegram/Telegram Images/-5791926680883940261_121.jpg
+CR /btr/int/backup/phone/jphone/Telegram/Telegram Images/-5791926680883940262_121.jpg
+CR /btr/int/backup/phone/jphone/Telegram/Telegram Images/-5791926680883940267_121.jpg
+CR /btr/int/backup/phone/jphone/Telegram/Telegram Images/-5791926680883940269_121.jpg
+CR /btr/int/backup/phone/jphone/Telegram/Telegram Images/-5792007482103678450_121.jpg
+CR /btr/int/backup/phone/jphone/Telegram/Telegram Images/-5792007482103678451_121.jpg
+CR /btr/int/backup/phone/jphone/Telegram/Telegram Images/-5792007482103678452_121.jpg
+CR /btr/int/backup/phone/jphone/WhatsApp/Media/.Statuses/39fa823890b546fa9861a89c4e9dd5e4.jpg
+CR /btr/int/backup/phone/jphone/WhatsApp/.Shared/4rDR66fCASF5f9EBQl3O2JHIjLWHMsscRbH76AwcDCo=.chk.tmp
+CR /btr/int/backup/phone/jphone/WhatsApp/.Shared/4rDR66fCASF5f9EBQl3O2JHIjLWHMsscRbH76AwcDCo=.tmp
+CR /btr/int/backup/phone/jphone/WhatsApp/.Shared/sOehnsK+xFI6LZbIawIOs0MTzKMtBkS+I8bMlXcJmhA=.enc.tmp
+CR /btr/int/vcs/infra/rkd/src/.main.rs.swp
+CR /btr/int/vcs/infra/rkd/target/debug/deps/rkd-8bf8a330efd3bbe4.d
+CR /btr/int/vcs/infra/rkd/target/debug/.fingerprint/rkd-8bf8a330efd3bbe4/output-bin-rkd
+CR /btr/int/vcs/infra/rkd/target/debug/incremental/rkd-2lk13hrkk1q0p/s-h3sr85uzwq-2tn7xh-working/dep-graph.part.bin
+CR /btr/int/vcs/infra/rkd/target/debug/incremental/rkd-2lk13hrkk1q0p/s-h3sr8aqpmi-10tmrh2-working/dep-graph.part.bin
+MD /btr/int/backup/phone/jphone/Android/data/com.google.android.apps.maps/cache/diskcache/map_cache.db
+MD /btr/int/backup/phone/jphone/Android/data/com.google.android.apps.maps/cache/diskcache/map_cache.db-shm
+MD /btr/int/backup/phone/jphone/Android/data/com.google.android.apps.maps/cache/diskcache/map_cache.db-wal
+MD /btr/int/backup/phone/jphone/Android/data/net.oneplus.weather/cache/weather/5d7a518560136742a286a85e4bba453a.0
+MD /btr/int/backup/phone/jphone/Android/data/net.oneplus.weather/cache/weather/86f73735d822ff7faf7eb29ef709e35e.0
+MD /btr/int/backup/phone/jphone/Android/data/net.oneplus.weather/cache/weather/cf0def82ec292373c6a7d1dfc2982f76.0
+MD /btr/int/backup/phone/jphone/Android/data/net.oneplus.weather/cache/weather/journal
+MD /btr/int/backup/phone/jphone/sms-backup/calls.xml
+MD /btr/int/backup/phone/jphone/sms-backup/sms.xml
+MD /btr/int/@home/autobot/.cache/tracker/meta.db-shm
+MD /btr/int/@home/autobot/.cache/tracker/meta.db-wal
+MD /btr/int/@home/autobot/.config/syncthing/index-v0.14.0.db/034034.log
+MD /btr/int/@home/git/.cache/gstreamer-1.0/registry.x86_64.bin
+MD /btr/int/@home/luxagen/.bash_history
+MD /btr/int/@home/luxagen/.cache/gstreamer-1.0/registry.x86_64.bin
+MD /btr/int/@home/luxagen/.cache/tracker/meta.db
+MD /btr/int/@home/luxagen/.cache/tracker/meta.db-shm
+MD /btr/int/@home/luxagen/.cache/tracker/meta.db-wal
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/2/cc
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/3/c/cxx
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/3/l/log
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/bu/mp/bumpalo
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/ch/ro/chrono
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/cl/ap/clap_derive
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/cl/ap/clap_lex
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/co/re/core-foundation-sys
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/cx/xb/cxxbridge-flags
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/cx/xb/cxxbridge-macro
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/cx/x-/cxx-build
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/er/rn/errno
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/he/ck/heck
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/ia/na/iana-time-zone
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/io/-l/io-lifetimes
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/js/-s/js-sys
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/li/nu/linux-raw-sys
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/me/mc/memchr
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/nu/m-/num-traits
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/on/ce/once_cell
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/os/_s/os_str_bytes
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/ru/st/rustix
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/sc/ra/scratch
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/te/rm/termcolor
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/ti/me/time
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/un/ix/unix-ts
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/wa/sm/wasm-bindgen
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/wa/sm/wasm-bindgen-backend
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/wa/sm/wasm-bindgen-macro
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/wa/sm/wasm-bindgen-macro-support
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/wa/sm/wasm-bindgen-shared
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/wi/na/winapi-util
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/wi/nd/windows
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/wi/nd/windows_aarch64_gnullvm
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/wi/nd/windows_aarch64_msvc
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/wi/nd/windows_i686_gnu
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/wi/nd/windows_i686_msvc
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/wi/nd/windows-sys
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/wi/nd/windows-targets
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/wi/nd/windows_x86_64_gnu
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/wi/nd/windows_x86_64_gnullvm
+MD /btr/int/@home/luxagen/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/wi/nd/windows_x86_64_msvc
+MD /btr/int/@home/luxagen/.kodi/temp/kodi.log
+MD /btr/int/@home/luxagen/.kodi/temp/kodi.old.log
+MD /btr/int/@home/luxagen/.kodi/userdata/addon_data/skin.estuary/settings.xml
+MD /btr/int/@home/luxagen/.kodi/userdata/Database/MyVideos116.db
+MD /btr/int/@home/luxagen/.kodi/userdata/Database/Textures13.db
+MD /btr/int/@home/luxagen/.kodi/userdata/guisettings.xml
+MD /btr/int/@home/luxagen/.local/share/gnome-shell/application_state
+MD /btr/int/@home/luxagen/.local/share/tracker/data/tracker-store.journal
+MD /btr/int/@home/luxagen/.local/share/xorg/Xorg.0.log
+MD /btr/int/@home/luxagen/snap/snap-store/common/.cache/gnome-software/appstream/components.xmlb
+MD /btr/int/@home/luxagen/.viminfo
+MD /btr/int/vcs/infra/rkd/src/main.rs
+MD /btr/int/vcs/infra/rk-rust/.git/index
+MD /btr/int/vcs/infra/rk-rust/.git/modules/fswalk/index
+RM /btr/int/backup/phone/jphone/Android/data/net.oneplus.weather/cache/log/OPWeather_Log-2024-12-27.txt
+RM /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/1_4913791148989874692.tgs
+RM /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/1_4963295225511412281_64.pt
+RM /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/1_4963295225511412281.temp
+RM /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/2_778160933443732965.tgs
+RM /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/acache/1_4963295225511412281.tgs_210_210_nolimit.pcache2
+RM /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/acache/1_4976968996927570535.tgs_157_157 .pcache2
+RM /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/acache/1_5042029079923000379.tgs_157_157 .pcache2
+RM /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/acache/1_5109463347825214515.tgs_157_157 .pcache2
+RM /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/acache/1_5109666143296029687.tgs_157_157 .pcache2
+RM /btr/int/backup/phone/jphone/Android/data/org.telegram.messenger/cache/.nomedia
+RM /btr/int/backup/phone/jphone/Telegram/Telegram Audio/4_5992557474840844530.ogg
+RM /btr/int/backup/phone/jphone/Telegram/Telegram Audio/.nomedia
+RM /btr/int/backup/phone/jphone/Telegram/Telegram Documents/.nomedia
+RM /btr/int/backup/phone/jphone/Telegram/Telegram Files/.nomedia
+RM /btr/int/backup/phone/jphone/Telegram/Telegram Images/-5987656741518689729_121.jpg
+RM /btr/int/backup/phone/jphone/Telegram/Telegram Images/.nomedia
+RM /btr/int/backup/phone/jphone/Telegram/Telegram Video/.nomedia
+RM /btr/int/backup/phone/jphone/WhatsApp/Media/.Statuses/d1bdcc7cfec243aea94283d91fdbf13a.jpg
+RM /btr/int/@home/autobot/.local/share/tracker/data/.meta.isrunning
