@@ -90,7 +90,7 @@ impl Drop for ScopeTimer
 #[derive(Clone)]
 struct FSNode
 {
-	hash: Hash,
+	hash: Option<Hash>,
 	path: &'static str,
 	done: std::cell::Cell<bool>,
 }
@@ -185,7 +185,7 @@ enum FSOp<'a>
 
 impl FSNode
 {
-	fn new(path: &'static str,hash: Hash) -> Self
+	fn new(path: &'static str,hash: Option<Hash>) -> Self
 	{
 		FSNode
 		{
@@ -195,22 +195,28 @@ impl FSNode
 		}
 	}
 
-	fn try_recycle(path: &'static str,hash: Hash,otherSide: &mut MapPaths) -> Option<Self>
+	fn try_recycle(path: &'static str,hash: Option<Hash>,otherSide: &mut MapPaths) -> Option<Self>
 	{
-		if let Some(o) = otherSide.get(path)
+		if let Some(h2) = hash
 		{
-			if hash == o.hash
+			if let Some(o) = otherSide.get(path)
 			{
-				// Identical to an item on the other side: recycle and set done
-				o.set_done();
-				return Some((*o).clone());
+				if let Some(h1) = o.hash
+				{
+					if hash == o.hash
+					{
+						// Identical to an item on the other side: recycle and set done
+						o.set_done();
+						return Some((*o).clone());
+					}
+				}
 			}
 		}
 
 		None
 	}
 
-	fn clone_or_new(path: &'static str,hash: Hash,otherSide: &mut MapPaths) -> Self
+	fn clone_or_new(path: &'static str,hash: Option<Hash>,otherSide: &mut MapPaths) -> Self
 	{
 		if let Some(rr) = Self::try_recycle(path,hash,otherSide) {return rr;}
 
@@ -422,7 +428,7 @@ impl RKD
 		}
 	}
 
-	fn make_node(&mut self,side: usize,path: &'static str,hash: Hash) -> FSNode
+	fn make_node(&mut self,side: usize,path: &'static str,hash: Option<Hash>) -> FSNode
 	{
 		debug_assert!(side<2);
 
@@ -506,8 +512,35 @@ fn hex_hash(input: &str) -> nom::IResult<&str,Hash>
 					nom::error::ErrorKind::HexDigit)));
 	}
 
-	let (_,strHash) = nom::combinator::all_consuming(
-		nom::character::complete::hex_digit1)(&input[0..count])?;
+	let parser=
+	{
+		use nom::
+		{
+			character::complete::*,
+			multi::count,
+			sequence::tuple,
+			branch::alt,
+//			Err::Failure,
+//			error::{ParseError},
+//			error::ErrorKind::*,
+		};
+
+	//	let (_,strHash) = nom::combinator::all_consuming(
+	//			hex_digit1)(&input[0..count])?;
+
+	//		nom::branch::alt((
+		alt((
+			count(
+				hex_digit1,
+				count),
+			tuple((
+				alpha1,
+				count(
+					char('-'),
+					count-1)))))
+	};
+
+	let (_,strHash) = parser(input);
 
 	Ok(
 		(
