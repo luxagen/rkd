@@ -90,7 +90,7 @@ impl Drop for ScopeTimer
 #[derive(Clone)]
 struct FSNode
 {
-	hash: Hash,
+	hash: Option<Hash>,
 	path: &'static str,
 	done: std::cell::Cell<bool>,
 }
@@ -185,7 +185,7 @@ enum FSOp<'a>
 
 impl FSNode
 {
-	fn new(path: &'static str,hash: Hash) -> Self
+	fn new(path: &'static str,hash: Option<Hash>) -> Self
 	{
 		FSNode
 		{
@@ -199,9 +199,9 @@ impl FSNode
 	{
 		if let Some(o) = otherSide.get(path)
 		{
-			if hash == o.hash
+			if o.hash == Some(hash)
 			{
-				// Identical to an item on the other side: recycle and set done
+				// Hashable and identical to an item on the other side: recycle and set done
 				o.set_done();
 				return Some((*o).clone());
 			}
@@ -214,7 +214,7 @@ impl FSNode
 	{
 		if let Some(rr) = Self::try_recycle(path,hash,otherSide) {return rr;}
 
-		Self::new(path,hash)
+		Self::new(path,Some(hash))
 	}
 
 	fn is_done(&self) -> bool
@@ -357,7 +357,10 @@ impl RKD
 				continue;
 			}
 
-			debug_assert_ne!(nodeL.hash,nodeR_.unwrap().hash);
+			if let (Some(hL),Some(hR)) = (nodeL.hash,nodeR_.unwrap().hash)
+			{
+				debug_assert_ne!(hL,hR); // hash-based matching should already have disposed of this match
+			}
 
 			nodeL.report(DISABLE_OUTPUT,&FSOp::Modify{lhs: nodeR_.unwrap()});
 		}
@@ -424,14 +427,19 @@ impl RKD
 		}
 	}
 
-	fn make_node(&mut self,side: usize,path: &'static str,hash: Hash) -> FSNode
+	fn make_node(&mut self,side: usize,path: &'static str,hash: Option<Hash>) -> FSNode
 	{
 		debug_assert!(side<2);
 
-		if side>0
-			{FSNode::clone_or_new(path,hash,&mut self.sides[0])}
-		else
-			{FSNode::new(path,hash)}
+		if let Some(h) = hash // Cloning sets done, so don't do it for unhashables
+		{
+			if side>0
+			{
+				return FSNode::clone_or_new(path,h,&mut self.sides[0]);
+			}
+		}
+
+		FSNode::new(path,hash)
 	}
 
 	fn make_hash_entry<'a>(hashes: &'a mut MapHashes,hash: &Hash,by: u64) -> &'a mut Object
@@ -481,7 +489,11 @@ impl RKD
 
 			files.insert(parsed.path,node);
 
-			Self::make_hash_entry(&mut self.hashes,&parsed.hash,parsed.by).sides[side].paths.push(node);
+			if let Some(hash) = parsed.hash
+			{
+				let entry = Self::make_hash_entry(&mut self.hashes,&hash,parsed.by);
+				entry.sides[side].paths.push(node);
+			}
 		}
 
 		self.sides.push(files);
@@ -491,11 +503,58 @@ impl RKD
 struct LogLine
 {
 	by: u64,
-	hash: Hash,
+	hash: Option<Hash>,
 	path: &'static str,
 }
 
-fn hexhash(input: &str) -> nom::IResult<&str,Hash>
+fn hexhash_good(input: &str) -> nom::IResult<&str,&str>
+{
+	const count: usize = 32;
+
+	nom::bytes::complete::take_while_m_n(
+		count,
+		count,
+		|c: char| c.is_ascii_hexdigit())(input)
+}
+
+fn hexhash_bad(input: &str) -> nom::IResult<&str,char>
+{
+	const count: usize = 32;
+
+	use nom::
+	{
+		sequence::tuple,
+		combinator::value,
+		character::complete::*,
+		combinator::map,
+	};
+
+	fn initial_char(input: &str) -> nom::IResult<&str,char>
+	{
+		if let Some(c) = input.chars().next()
+		{
+			if c.is_alphabetic() || '-'==c
+			{
+				return Ok((&input[1..],c));
+			}
+		}
+
+		Err(
+			nom::Err::Error(
+				nom::error::Error::new(
+					input,
+					nom::error::ErrorKind::Verify)))
+	}
+
+	map(
+		tuple((
+			initial_char, // Match an alphabetic string
+			value((),nom::multi::count(char('-'),count-1)), // Assert the presence of `count-1` dashes
+		)),
+		|(alpha,_)| alpha)(input) // Extract the first character of `alpha1`
+}
+
+fn hexhash(input: &str) -> nom::IResult<&str,Option<Hash>>
 {
 	const count: usize = 32;
 
@@ -511,15 +570,18 @@ fn hexhash(input: &str) -> nom::IResult<&str,Hash>
 		return Err(Failure(ParseError::from_error_kind(input,HexDigit)));
 	}
 
-	let (_,strHash) = nom::combinator::all_consuming(
-		nom::character::complete::hex_digit1)(&input[0..count])?;
-
-	Ok(
-		(
-			&input[count..],
-			Hash::new(strHash),
-		)
-	)
+	match hexhash_good(&input)
+	{
+		Ok((r,strHash)) => Ok((r,Some(Hash::new(strHash)))),
+		Err(_) => match hexhash_bad(&input)
+		{
+			Ok((r,_sc)) =>
+			{
+				Ok((r,None))
+			},
+			Err(e) => Err(e),
+		},
+	}
 }
 
 impl LogLine
