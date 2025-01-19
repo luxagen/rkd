@@ -198,7 +198,7 @@ impl FSNode
 		}
 	}
 
-	fn new_or_recycle(path: &'static str,hash: Hash,otherSide: &mut MapPaths) -> Self
+	fn try_recycle(path: &'static str,hash: Hash,otherSide: &mut MapPaths) -> Option<Self>
 	{
 		if let Some(o) = otherSide.get(path)
 		{
@@ -206,11 +206,18 @@ impl FSNode
 			{
 				// Identical to an item on the other side: recycle and set done
 				o.set_done();
-				return (*o).clone();
+				return Some((*o).clone());
 			}
 		}
 
-		FSNode::new(path,hash)
+		None
+	}
+
+	fn clone_or_new(path: &'static str,hash: Hash,otherSide: &mut MapPaths) -> Self
+	{
+		if let Some(rr) = Self::try_recycle(path,hash,otherSide) {return rr;}
+
+		Self::new(path,hash)
 	}
 
 	fn is_done(&self) -> bool
@@ -425,7 +432,7 @@ impl RKD
 		debug_assert!(side<2);
 
 		if side>0
-			{return FSNode::new_or_recycle(path,hash,&mut self.sides[0])}
+			{FSNode::clone_or_new(path,hash,&mut self.sides[0])}
 		else
 			{FSNode::new(path,hash)}
 	}
