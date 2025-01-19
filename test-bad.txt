@@ -1,2 +1,2 @@
 note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
-thread 'main' panicked at 'called `Result::unwrap()` on an `Err` value: Error(Error { input: "--------------------------------", code: HexDigit })', src/main.rs:456:48
+thread 'main' panicked at 'called `Result::unwrap()` on an `Err` value: Error(Error { input: "--------------------------------", code: HexDigit })', src/main.rs:463:48
