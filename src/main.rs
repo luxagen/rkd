@@ -561,7 +561,11 @@ fn hexhash(input: &str) -> nom::IResult<&str,Option<Hash>>
 		Ok((r,strHash)) => Ok((r,Some(Hash::new(strHash)))),
 		Err(_) => match hexhash_bad(&input)
 		{
-			Ok((r,_sc)) => Ok((r,None)),
+			Ok((r,_sc)) =>
+			{
+				eprintln!("ALERT: BADHASH SUCCESSFULLY PARSED");
+				Ok((r,None))
+			},
 			Err(e) => Err(e),
 		},
 	}
