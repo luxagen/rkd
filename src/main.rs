@@ -503,7 +503,44 @@ fn hexhash_good(input: &str) -> nom::IResult<&str,&str>
 		|c: char| c.is_ascii_hexdigit())(input)
 }
 
-fn hexhash(input: &str) -> nom::IResult<&str,Hash>
+fn hexhash_bad(input: &str) -> nom::IResult<&str,char>
+{
+	const count: usize = 32;
+
+	use nom::
+	{
+		sequence::tuple,
+		combinator::value,
+		character::complete::*,
+		combinator::map,
+	};
+
+	fn initial_char(input: &str) -> nom::IResult<&str,char>
+	{
+		if let Some(c) = input.chars().next()
+		{
+			if c.is_alphabetic() || '-'==c
+			{
+				return Ok((&input[1..],c));
+			}
+		}
+
+		Err(
+			nom::Err::Error(
+				nom::error::Error::new(
+					input,
+					nom::error::ErrorKind::Verify)))
+	}
+
+	map(
+		tuple((
+			initial_char, // Match an alphabetic string
+			value((),nom::multi::count(char('-'),count-1)), // Assert the presence of `count-1` dashes
+		)),
+		|(alpha,_)| alpha)(input) // Extract the first character of `alpha1`
+}
+
+fn hexhash(input: &str) -> nom::IResult<&str,Option<Hash>>
 {
 	const count: usize = 32;
 
@@ -519,14 +556,15 @@ fn hexhash(input: &str) -> nom::IResult<&str,Hash>
 		return Err(Failure(ParseError::from_error_kind(input,HexDigit)));
 	}
 
-	let (r,strHash) = hexhash_good(&input)?;
-
-	Ok(
-		(
-			r,
-			Hash::new(strHash),
-		)
-	)
+	match hexhash_good(&input)
+	{
+		Ok((r,strHash)) => Ok((r,Some(Hash::new(strHash)))),
+		Err(_) => match hexhash_bad(&input)
+		{
+			Ok((r,_sc)) => Ok((r,None)),
+			Err(e) => Err(e),
+		},
+	}
 }
 
 impl LogLine
@@ -555,7 +593,7 @@ impl LogLine
 			LogLine
 			{
 				by: fields.0,
-				hash: fields.1,
+				hash: fields.1.unwrap(),
 				path: unsafe_dup_str(fields.2),
 			},
 		))
