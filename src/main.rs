@@ -102,7 +102,7 @@ struct Side
 
 struct Object
 {
-	by: u64,
+//	by: u64,
 	sides: [Side;2],
 }
 
@@ -307,9 +307,9 @@ impl Side
 
 impl Object
 {
-	fn new(by: u64) -> Self
+	fn new(_by: u64) -> Self
 	{
-		Self{by,sides: [Side::new(),Side::new()]}
+		Self{/*by,*/sides: [Side::new(),Side::new()]}
 	}
 }
 
@@ -444,7 +444,7 @@ impl RKD
 		}
 
 		let result = hashes.get_mut(hash).unwrap(); // TODO elide lookup when inserting
-		assert_eq!(by,result.by);
+//		assert_eq!(by,result.by);
 		result
 	}
 
