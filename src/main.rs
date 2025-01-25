@@ -90,7 +90,7 @@ impl Drop for ScopeTimer
 #[derive(Clone)]
 struct FSNode
 {
-	hash: Hash,
+	hash: Option<Hash>,
 	path: &'static str,
 	done: std::cell::Cell<bool>,
 }
@@ -185,7 +185,7 @@ enum FSOp<'a>
 
 impl FSNode
 {
-	fn new(path: &'static str,hash: Hash) -> Self
+	fn new(path: &'static str,hash: Option<Hash>) -> Self
 	{
 		FSNode
 		{
@@ -199,9 +199,9 @@ impl FSNode
 	{
 		if let Some(o) = otherSide.get(path)
 		{
-			if hash == o.hash
+			if o.hash == Some(hash)
 			{
-				// Identical to an item on the other side: recycle and set done
+				// Hashable and identical to an item on the other side: recycle and set done
 				o.set_done();
 				return Some((*o).clone());
 			}
@@ -214,7 +214,7 @@ impl FSNode
 	{
 		if let Some(rr) = Self::try_recycle(path,hash,otherSide) {return rr;}
 
-		Self::new(path,hash)
+		Self::new(path,Some(hash))
 	}
 
 	fn is_done(&self) -> bool
@@ -331,7 +331,6 @@ impl RKD
 		assert_eq!(self.sides.len(),2);
 
 		self.diff_cpmv();
-//		self.diff_cz();
 		self.diff_remaining();
 
 		0
@@ -355,7 +354,10 @@ impl RKD
 				continue;
 			}
 
-			debug_assert_ne!(nodeL.hash,nodeR_.unwrap().hash);
+			if let (Some(hL),Some(hR)) = (nodeL.hash,nodeR_.unwrap().hash)
+			{
+				debug_assert_ne!(hL,hR); // hash-based matching should already have disposed of this match
+			}
 
 			nodeL.report(DISABLE_OUTPUT,&FSOp::Modify{lhs: nodeR_.unwrap()});
 		}
@@ -422,14 +424,19 @@ impl RKD
 		}
 	}
 
-	fn make_node(&mut self,side: usize,path: &'static str,hash: Hash) -> FSNode
+	fn make_node(&mut self,side: usize,path: &'static str,hash: Option<Hash>) -> FSNode
 	{
 		debug_assert!(side<2);
 
-		if side>0
-			{FSNode::clone_or_new(path,hash,&mut self.sides[0])}
-		else
-			{FSNode::new(path,hash)}
+		if let Some(h) = hash // Cloning sets done, so don't do it for unhashables
+		{
+			if side>0
+			{
+				return FSNode::clone_or_new(path,h,&mut self.sides[0]);
+			}
+		}
+
+		FSNode::new(path,hash)
 	}
 
 	fn make_hash_entry<'a>(hashes:&'a mut MapHashes,hash: &Hash,by: u64) -> &'a mut Object
@@ -479,7 +486,10 @@ impl RKD
 
 			files.insert(parsed.path,node);
 
-			Self::make_hash_entry(&mut self.hashes,&parsed.hash,parsed.by).sides[side].paths.push(node);
+			if parsed.hash.is_some()
+			{
+				Self::make_hash_entry(&mut self.hashes,&parsed.hash.unwrap(),parsed.by).sides[side].paths.push(node);
+			}
 		}
 
 		self.sides.push(files);
@@ -489,7 +499,7 @@ impl RKD
 struct LogLine
 {
 	by: u64,
-	hash: Hash,
+	hash: Option<Hash>,
 	path: &'static str,
 }
 
@@ -597,7 +607,7 @@ impl LogLine
 			LogLine
 			{
 				by: fields.0,
-				hash: fields.1.unwrap(),
+				hash: fields.1,
 				path: unsafe_dup_str(fields.2),
 			},
 		))
