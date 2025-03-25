@@ -328,13 +328,20 @@ impl RKD
 	{
 		assert_eq!(self.sides.len(),0);
 
-		self.parse_side(&logL,&args.exclude);
-		self.parse_side(&logR,&args.exclude);
+		let mut fakeHashCountL=0;
+		let mut fakeHashCountR=0;
+		self.parse_side(&logL,&args.exclude,&mut fakeHashCountL);
+		self.parse_side(&logR,&args.exclude,&mut fakeHashCountR);
 
 		assert_eq!(self.sides.len(),2);
 
 		self.diff_cpmv();
 		self.diff_remaining();
+
+		if fakeHashCountL>0 || fakeHashCountR>0
+		{
+			eprintln!("[WARNING] Pseudohashes found: L {}, R {}",fakeHashCountL,fakeHashCountR);
+		}
 
 		0
 	}
@@ -456,7 +463,7 @@ impl RKD
 		result
 	}
 
-	fn parse_side(&mut self,log: &Vec<&str>,excludes: &[String])
+	fn parse_side(&mut self,log: &Vec<&str>,excludes: &[String],fakeHashCount: &mut usize)
 	{
 		assert!(self.sides.len() < 2);
 
@@ -470,7 +477,7 @@ impl RKD
 
 		'line_parser: for line in log 
 		{
-			let parsed = LogLine::parse(&line).unwrap().1;
+			let parsed = LogLine::parse(&line,fakeHashCount,side).unwrap().1;
 
 			for substr in excludes
 			{
@@ -586,7 +593,7 @@ fn hexhash(input: &str) -> nom::IResult<&str,Option<Hash>>
 
 impl LogLine
 {
-	fn parse(input: &str) -> nom::IResult<&str,Self>
+	fn parse<'a>(input: &'a str,fakeHashCount: &mut usize,side: usize) -> nom::IResult<&'a str,Self>
 	{
 		use nom::{
 			sequence::*,
@@ -605,12 +612,25 @@ impl LogLine
 			)
 		)(input)?;
 
+		let hash = fields.1;
+
+		if hash.is_none()
+		{
+			eprintln!(
+				"[WARNING] pseudohash on {} file: {}",
+				if side>0 { "R" } else { "L" },
+				fields.2,
+			);
+
+			*fakeHashCount += 1;
+		}
+
 		Ok((
 			rest,
 			LogLine
 			{
 				by: fields.0,
-				hash: fields.1,
+				hash,
 				path: unsafe_dup_str(fields.2),
 			},
 		))
