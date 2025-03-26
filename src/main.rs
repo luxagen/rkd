@@ -155,13 +155,31 @@ fn slurp_log(stream: Box<dyn std::io::Read>) -> Vec<&'static str>
 	log
 }
 
-fn main()
+fn check_trees(pathL: &str, pathR: &str)
 {
-	if "-" == args.treeL  &&  "-" == args.treeR
+	let siL = "-"==pathL;
+	let siR = "-"==pathR;
+
+	if siL&&siR
 	{
-		eprintln!("Cannot compare stdin with itself!");
+		eprintln!("[ERROR]: cannot compare stdin with itself");
 		std::process::exit(3);
 	}
+
+	let missing  = ((!siL && !std::path::Path::new(&pathR).exists()) as i32) << 1
+				 | ((!siR && !std::path::Path::new(&pathL).exists()) as i32);
+
+	if 0!=missing
+	{
+		if 0!=(0b01&missing) {eprintln!("[ERROR]: Left tree '{}' not found",pathL);}
+		if 0!=(0b10&missing) {eprintln!("[ERROR]: Right tree '{}' not found",pathR);}
+		std::process::exit(missing);
+	}
+}
+
+fn main()
+{
+	check_trees(&args.treeL,&args.treeR);
 
 	// Pre-open both early so we can fail fast on bad arguments
 	let (fileL,fileR) = (fsnode_open(&args.treeL),fsnode_open(&args.treeR));
