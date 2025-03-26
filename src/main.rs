@@ -26,6 +26,8 @@ struct Hash
 	bytes: [u8;16],
 }
 
+const EMPTY_HASH: Hash = Hash { bytes: [0xd4, 0x1d, 0x8c, 0xd9, 0x8f, 0x00, 0xb2, 0x04, 0xe9, 0x80, 0x09, 0x98, 0xec, 0xf8, 0x42, 0x7e] };
+
 impl Hash
 {
 	fn new(from: &str) -> Self
@@ -424,8 +426,10 @@ impl RKD
 
 		debug_assert_eq!(self.sides.len(),2);
 
-		for obj in self.hashes.values()
+		for (hash,obj) in self.hashes.iter()
 		{
+			if hash == &EMPTY_HASH {continue}
+
 			// Build a reference list for RHS, excluding done items (i.e. make a "to report on" list)
 			let mut pathsR = obj.sides[1].paths.iter()
 				.filter_map(|nodeR| if !nodeR.is_done() {Some(*nodeR)} else {None})
