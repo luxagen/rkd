@@ -528,6 +528,10 @@ impl RKD
 		{
 			let parsed = LogLine::parse(&line,ambiguousFileCount,side).unwrap().1;
 
+			if parsed.is_none() {continue;}
+
+			let parsed = parsed.unwrap();
+
 			for substr in excludes
 			{
 				if parsed.path.contains(substr)
@@ -650,7 +654,7 @@ fn hexhash(input: &str) -> nom::IResult<&str,Option<Hash>>
 
 impl LogLine
 {
-	fn parse<'a>(input: &'a str,ambiguousFileCount: &mut usize,side: usize) -> nom::IResult<&'a str,Self>
+	fn parse<'a>(input: &'a str,ambiguousFileCount: &mut usize,side: usize) -> nom::IResult<&'a str,Option<Self>>
 	{
 		use nom::{
 			sequence::*,
@@ -658,6 +662,12 @@ impl LogLine
 			bytes::complete::tag,
 			combinator::{opt,all_consuming},
 		};
+
+		// Skip lines that start with a hash (#) character or are empty
+		if input.is_empty() || input.starts_with('#')
+		{
+			return Ok((input,None));
+		}
 
 		let (rest,fields) = all_consuming(
 			tuple(
@@ -682,15 +692,12 @@ impl LogLine
 			*ambiguousFileCount += 1;
 		}
 
-		Ok((
-			rest,
-			LogLine
-			{
-				by: fields.0,
-				hash,
-				path: unsafe_dup_str(fields.2),
-			},
-		))
+		Ok((rest, Some(LogLine
+		{
+			by: fields.0,
+			hash,
+			path: unsafe_dup_str(fields.2),
+		})))
 	}
 }
 
