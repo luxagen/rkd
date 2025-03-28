@@ -271,10 +271,13 @@ impl FSNode
 				{
 					let verb  =  if let FSOp::Delete = op {"RM".red()} else {"CR".green()};
 
+					let path = escape(Cow::Borrowed(self.path));
+
 					writeln!(
 						lock,
 						"{verb} {}",
-						escape(Cow::Borrowed(self.path))).unwrap();
+						if self.hash.is_none() {path.bright_blue()} else {path.white()},
+					).unwrap();
 				}
 			},
 			FSOp::CopyMove{src} =>
