@@ -385,7 +385,7 @@ impl RKD
 
 		if fakeHashCountL>0 || fakeHashCountR>0
 		{
-			eprintln!("{cby}[WARNING] Pseudohashes found: L {}, R {}{cr}",fakeHashCountL,fakeHashCountR);
+			eprintln!("{cby}[WARNING] Ambiguous files: < {}, > {}{cr}",fakeHashCountL,fakeHashCountR);
 		}
 
 		0
@@ -678,8 +678,8 @@ impl LogLine
 			const cr: &str = color_reset;
 	
 			eprintln!(
-				"{cby}[WARNING] pseudohash on {} file: {}{cr}",
-				if side>0 { "R" } else { "L" },
+				"{cby}[WARNING] Ambiguous metadata [{}]: {}{cr}",
+				if side>0 { ">" } else { "<" },
 				fields.2,
 			);
 
