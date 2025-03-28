@@ -165,9 +165,13 @@ fn check_trees(pathL: &str, pathR: &str)
 	let siL = "-"==pathL;
 	let siR = "-"==pathR;
 
+	use inline_colorization::*;
+	const cbr: &str = color_bright_red;
+	const cr: &str = color_reset;
+
 	if siL&&siR
 	{
-		eprintln!("[ERROR]: cannot compare stdin with itself");
+		eprintln!("{cbr}[ERROR]: cannot compare stdin with itself{cr}");
 		std::process::exit(3);
 	}
 
@@ -176,8 +180,8 @@ fn check_trees(pathL: &str, pathR: &str)
 
 	if 0!=missing
 	{
-		if 0!=(0b01&missing) {eprintln!("[ERROR]: Left tree '{}' not found",pathL);}
-		if 0!=(0b10&missing) {eprintln!("[ERROR]: Right tree '{}' not found",pathR);}
+		if 0!=(0b01&missing) {eprintln!("{cbr}[ERROR]: Left tree '{}' not found{cr}",pathL);}
+		if 0!=(0b10&missing) {eprintln!("{cbr}[ERROR]: Right tree '{}' not found{cr}",pathR);}
 		std::process::exit(missing);
 	}
 }
@@ -368,7 +372,11 @@ impl RKD
 
 		if ambiguousFileCountL>0 || ambiguousFileCountR>0
 		{
-			eprintln!("[WARNING] Ambiguous files: < {}, > {}",ambiguousFileCountL,ambiguousFileCountR);
+			use inline_colorization::*;
+			const cby: &str = color_bright_yellow;
+			const cr: &str = color_reset;
+
+			eprintln!("{cby}[WARNING] Ambiguous files: < {}, > {}{cr}",ambiguousFileCountL,ambiguousFileCountR);
 		}
 
 		0
@@ -503,8 +511,12 @@ impl RKD
 			{
 				if obj.by.get() != parsed.by
 				{
+					use inline_colorization::*;
+					const cby: &str = color_bright_yellow;
+					const cr: &str = color_reset;
+
 					eprintln!(
-						"[WARNING] File-size mismatch [{}]: {}",
+						"{cby}[WARNING] File-size mismatch [{}]: {}{cr}",
 						if self.sides.len() > 0 {">"} else {"<"},
 						parsed.path,
 					);
@@ -692,8 +704,12 @@ impl LogLine
 
 		if hash.is_none()
 		{
+			use inline_colorization::*;
+			const cby: &str = color_bright_yellow;
+			const cr: &str = color_reset;
+	
 			eprintln!(
-				"[WARNING] Missing hash [{}]: {}",
+				"{cby}[WARNING] Missing hash [{}]: {}{cr}",
 				if side>0 {">"} else {"<"},
 				fields.2,
 			);
