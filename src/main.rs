@@ -260,6 +260,7 @@ impl FSNode
 
 		use std::borrow::Cow;
 		use shell_escape::escape;
+		use colored::*;
 		use io::Write;
 
 		match op
@@ -268,11 +269,11 @@ impl FSNode
 			{
 				if !disable
 				{
-					let verb  =  if let FSOp::Delete = op {"RM"} else {"CR"};
+					let verb  =  if let FSOp::Delete = op {"RM".red()} else {"CR".green()};
 
 					writeln!(
 						lock,
-						"{verb}  {}",
+						"{verb} {}",
 						escape(Cow::Borrowed(self.path))).unwrap();
 				}
 			},
@@ -283,7 +284,7 @@ impl FSNode
 				// If paths match, neither must be done and it's a MV
 				let copy = if src.is_done() {true} else {src.set_done(); false};
 
-				let verb  =  if copy {"CP"} else {"MV"};
+				let verb  =  if copy {"CP".cyan()} else {"MV".magenta()};
 
 				if !disable
 				{
@@ -301,7 +302,7 @@ impl FSNode
 					// Print common ancestor and then each path relative to that
 					writeln!(
 						lock,
-						"{verb}  {}{}{} {}",
+						"{verb} {}{}{} {}",
 						prefix,
 						if prefix.is_empty() {""} else {" "},
 						&escape(Cow::Borrowed(src.path))[pos..],
@@ -312,9 +313,13 @@ impl FSNode
 			{
 				if !disable
 				{
+					use inline_colorization::*;
+					const cr: &str = color_reset;
+					const cmd: &str = color_yellow;
+
 					writeln!(
 						lock,
-						"MD  {}",
+						"{cmd}MD{cr} {}",
 						escape(Cow::Borrowed(self.path))).unwrap();
 				}
 
