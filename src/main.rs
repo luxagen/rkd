@@ -254,6 +254,8 @@ impl FSNode
 
 		let mut lock = std::io::stdout().lock();
 
+		use std::borrow::Cow;
+		use shell_escape::escape;
 		use io::Write;
 
 		match op
@@ -266,8 +268,8 @@ impl FSNode
 
 					writeln!(
 						lock,
-						"{verb} {}",
-						self.path).unwrap();
+						"{verb}  {}",
+						escape(Cow::Borrowed(self.path))).unwrap();
 				}
 			},
 			FSOp::CopyMove{src} =>
@@ -290,13 +292,16 @@ impl FSNode
 						None => 0,
 					};
 
+					let prefix = &self.path[0..pos];
+
 					// Print common ancestor and then each path relative to that
 					writeln!(
 						lock,
-						"{verb} '{}'\t'{}'\t'{}'",
-						&self.path[0..pos],
-						&src.path[pos..],
-						&self.path[pos..]).unwrap();
+						"{verb}  {}{}{} {}",
+						prefix,
+						if prefix.is_empty() {""} else {" "},
+						&escape(Cow::Borrowed(src.path))[pos..],
+						&escape(Cow::Borrowed(self.path))[pos..]).unwrap();
 				}
 			},
 			FSOp::Modify{lhs} =>
@@ -305,8 +310,8 @@ impl FSNode
 				{
 					writeln!(
 						lock,
-						"MD {}",
-						self.path).unwrap();
+						"MD  {}",
+						escape(Cow::Borrowed(self.path))).unwrap();
 				}
 
 				lhs.set_done();
