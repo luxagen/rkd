@@ -162,9 +162,13 @@ fn check_trees(pathL: &str, pathR: &str)
 	let siL = "-"==pathL;
 	let siR = "-"==pathR;
 
+	use inline_colorization::*;
+	const cbr: &str = color_bright_red;
+	const cr: &str = color_reset;
+
 	if siL&&siR
 	{
-		eprintln!("[ERROR]: cannot compare stdin with itself");
+		eprintln!("{cbr}[ERROR]: cannot compare stdin with itself{cr}");
 		std::process::exit(3);
 	}
 
@@ -173,8 +177,8 @@ fn check_trees(pathL: &str, pathR: &str)
 
 	if 0!=missing
 	{
-		if 0!=(0b01&missing) {eprintln!("[ERROR]: Left tree '{}' not found",pathL);}
-		if 0!=(0b10&missing) {eprintln!("[ERROR]: Right tree '{}' not found",pathR);}
+		if 0!=(0b01&missing) {eprintln!("{cbr}[ERROR]: Left tree '{}' not found{cr}",pathL);}
+		if 0!=(0b10&missing) {eprintln!("{cbr}[ERROR]: Right tree '{}' not found{cr}",pathR);}
 		std::process::exit(missing);
 	}
 }
@@ -363,9 +367,13 @@ impl RKD
 		self.diff_cpmv();
 		self.diff_remaining();
 
+		use inline_colorization::*;
+		const cby: &str = color_bright_yellow;
+		const cr: &str = color_reset;
+
 		if fakeHashCountL>0 || fakeHashCountR>0
 		{
-			eprintln!("[WARNING] Pseudohashes found: L {}, R {}",fakeHashCountL,fakeHashCountR);
+			eprintln!("{cby}[WARNING] Pseudohashes found: L {}, R {}{cr}",fakeHashCountL,fakeHashCountR);
 		}
 
 		0
@@ -653,8 +661,12 @@ impl LogLine
 
 		if hash.is_none()
 		{
+			use inline_colorization::*;
+			const cby: &str = color_bright_yellow;
+			const cr: &str = color_reset;
+	
 			eprintln!(
-				"[WARNING] pseudohash on {} file: {}",
+				"{cby}[WARNING] pseudohash on {} file: {}{cr}",
 				if side>0 { "R" } else { "L" },
 				fields.2,
 			);
