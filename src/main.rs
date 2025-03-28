@@ -265,6 +265,10 @@ impl FSNode
 		use shell_escape::escape;
 		use colored::*;
 		use io::Write;
+		use inline_colorization::*;
+
+		const cbw: &str = color_bright_white;
+		const cr: &str = color_reset;
 
 		match op
 		{
@@ -274,10 +278,13 @@ impl FSNode
 				{
 					let verb  =  if let FSOp::Delete = op {"RM".red()} else {"CR".green()};
 
+					let path = escape(Cow::Borrowed(self.path));
+
 					writeln!(
 						lock,
 						"{verb} {}",
-						escape(Cow::Borrowed(self.path))).unwrap();
+						if self.hash.is_none() {path.bright_blue()} else {path.white()},
+					).unwrap();
 				}
 			},
 			FSOp::CopyMove{src} =>
@@ -305,7 +312,7 @@ impl FSNode
 					// Print common ancestor and then each path relative to that
 					writeln!(
 						lock,
-						"{verb} {}{}{} {}",
+						"{verb} {cbw}{}{cr}{}{} {}",
 						prefix,
 						if prefix.is_empty() {""} else {" "},
 						&escape(Cow::Borrowed(src.path))[pos..],
