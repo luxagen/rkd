@@ -17,6 +17,8 @@ struct Args
 	#[arg(short,long="time",help="Print phase timings to stderr")]
 	timings: bool,
 
+	#[arg(short='P',long="no-prefix",help="Omit common path prefix and show full paths")]
+	no_prefix: bool,
 	#[arg(name="left",required=true,help="Left-hand (before) tree or log file")]
 	treeL: String,
 	#[arg(name="right",required=true,help="Right-hand (after) tree or log file")]
@@ -298,25 +300,37 @@ impl FSNode
 
 				if !disable
 				{
-					let len=prefix_match_len(src.path.chars(),self.path.chars()); // Find common path prefix
-
-					// Get rid of any common terminal-name prefix match to get a valid ancestor path
-					let pos = match self.path[0..len].rfind('/')
+					if args.no_prefix
 					{
-						Some(x) => 1+x,
-						None => 0,
-					};
+						writeln!(
+							lock,
+							"{verb} {} {}",
+							src.path,
+							self.path
+						).unwrap();
+					}
+					else
+					{
+						let len=prefix_match_len(src.path.chars(),self.path.chars()); // Find common path prefix
 
-					let prefix = &self.path[0..pos];
+						// Get rid of any common terminal-name prefix match to get a valid ancestor path
+						let pos = match self.path[0..len].rfind('/')
+						{
+							Some(x) => 1+x,
+							None => 0,
+						};
 
-					// Print common ancestor and then each path relative to that
-					writeln!(
-						lock,
-						"{verb} {cbw}{}{cr}{}{} {}",
-						prefix,
-						if prefix.is_empty() {""} else {" "},
-						&escape(Cow::Borrowed(src.path))[pos..],
-						&escape(Cow::Borrowed(self.path))[pos..]).unwrap();
+						let prefix = &self.path[0..pos];
+
+						// Print common ancestor and then each path relative to that
+						writeln!(
+							lock,
+							"{verb} {cbw}{}{cr}{}{} {}",
+							prefix,
+							if prefix.is_empty() {""} else {" "},
+							&escape(Cow::Borrowed(src.path))[pos..],
+							&escape(Cow::Borrowed(self.path))[pos..]).unwrap();
+					}
 				}
 			},
 			FSOp::Modify{lhs} =>
