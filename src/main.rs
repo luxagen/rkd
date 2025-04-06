@@ -170,22 +170,51 @@ fn parse_path(path: &str) -> PathLocation
 	PathLocation::Local(path.to_string()) // If not stdin or remote, treat as local path
 }
 
-fn fsnode_open(path: &str) -> Box<dyn std::io::Read>
+fn fsnode_open(path: &str) -> Result<Box<dyn std::io::Read>, String>
 {
 	use std::process::{Command,Stdio};
 
 	if "-"==path
-		{return Box::new(io::stdin().lock());}
+		{return Ok(Box::new(io::stdin().lock()));}
 
-	if !std::fs::metadata(path).unwrap().is_dir()
-		{return Box::new(std::fs::File::open(path).unwrap());}
+	// Check if path exists
+	if !std::path::Path::new(path).exists()
+	{
+		return Err(format!("Path '{}' not found",path));
+	}
 
+	// Handle file
+	if let Ok(metadata) = std::fs::metadata(path)
+	{
+		if !metadata.is_dir()
+		{
+			return match std::fs::File::open(path)
+			{
+				Ok(file) => Ok(Box::new(file)),
+				Err(e) => Err(format!("Failed to open file '{path}': {e}"))
+			};
+		}
+	}
+	else
+	{
+		return Err(format!("Failed to get metadata for '{path}'"));
+	}
+
+	// Handle directory
 	let mut rk = Command::new("sudo");
 	rk.args(["rk","-rQe",path]);
 	rk.stdin(Stdio::null());
 	rk.stdout(Stdio::piped());
 
-	Box::new(rk.spawn().unwrap().stdout.take().unwrap())
+	match rk.spawn()
+	{
+		Ok(mut child) => match child.stdout.take()
+		{
+			Some(stdout) => Ok(Box::new(stdout)),
+			None => Err(format!("Failed to capture stdout from rk for '{path}'"))
+		},
+		Err(e) => Err(format!("Failed to run rk for '{path}': {e}"))
+	}
 }
 
 #[macro_use]
@@ -210,38 +239,62 @@ fn slurp_log(stream: Box<dyn std::io::Read>) -> Vec<&'static str>
 	log
 }
 
-fn check_trees(pathL: &str, pathR: &str)
+fn main()
 {
-	let siL = "-"==pathL;
-	let siR = "-"==pathR;
+	let pathL = parse_path(&args.treeL);
+	let pathR = parse_path(&args.treeR);
 
-	use inline_colorization::*;
-	const cbr: &str = color_bright_red;
-	const cr: &str = color_reset;
-
-	if siL&&siR
+	// Panic on remote paths
+	if let PathLocation::Remote { .. } = pathL
 	{
+		panic!("Remote paths not supported for left tree");
+	}
+	if let PathLocation::Remote { .. } = pathR
+	{
+		panic!("Remote paths not supported for right tree");
+	}
+
+	if matches!(pathL, PathLocation::Stdin) && matches!(pathR, PathLocation::Stdin)
+	{
+		use inline_colorization::*;
+		const cbr: &str = color_bright_red;
+		const cr: &str = color_reset;
+
 		eprintln!("{cbr}[ERROR]: cannot compare stdin with itself{cr}");
 		std::process::exit(3);
 	}
 
-	let missing  =  ((!siL && !std::path::Path::new(&pathR).exists()) as i32) << 1
-				|	((!siR && !std::path::Path::new(&pathL).exists()) as i32);
-
-	if 0!=missing
-	{
-		if 0!=(0b01&missing) {eprintln!("{cbr}[ERROR]: Left tree '{}' not found{cr}",pathL);}
-		if 0!=(0b10&missing) {eprintln!("{cbr}[ERROR]: Right tree '{}' not found{cr}",pathR);}
-		std::process::exit(missing);
-	}
-}
-
-fn main()
-{
-	check_trees(&args.treeL,&args.treeR);
-
 	// Pre-open both early so we can fail fast on bad arguments
-	let (fileL,fileR) = (fsnode_open(&args.treeL),fsnode_open(&args.treeR));
+	let (fileL, fileR) = match (fsnode_open(&args.treeL), fsnode_open(&args.treeR))
+	{
+		(Ok(left), Ok(right)) => (left, right),
+		(left, right) =>
+		{
+			use inline_colorization::*;
+			const cbr: &str = color_bright_red;
+			const cr: &str = color_reset;
+			
+			let missing = (right.is_err() as i32) << 1 | (left.is_err() as i32);
+			
+			if left.is_err()
+			{
+				if let PathLocation::Local(path) = pathL
+				{
+					eprintln!("{cbr}[ERROR]: Left tree '{path}' not found{cr}");
+				}
+			}
+			
+			if right.is_err()
+			{
+				if let PathLocation::Local(path) = pathR
+				{
+					eprintln!("{cbr}[ERROR]: Right tree '{path}' not found{cr}");
+				}
+			}
+			
+			std::process::exit(missing);
+		}
+	};
 
 	let (logL,logR) = (slurp_log(fileL),slurp_log(fileR));
 
