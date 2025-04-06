@@ -122,6 +122,54 @@ struct RKD
 	hashes: MapHashes,
 }
 
+#[derive(Clone)]
+enum PathLocation
+{
+	Stdin,
+	Local(String),
+	Remote {user: String,host: String,path: String}
+}
+
+fn parse_path(path: &str) -> PathLocation
+{
+	// Check if path is stdin
+	if path == "-"
+	{
+		return PathLocation::Stdin;
+	}
+
+	// Check for colon which separates host and path
+	if let Some(colonIdx) = path.find(':')
+	{
+		let hostname = &path[0..colonIdx];
+		let hostPath = &path[colonIdx+1..];
+		
+		// Split host part into user and host if @ is present
+		if let Some(atIdx) = hostname.find('@')
+		{
+			// user@host:path
+			let user = hostname[0..atIdx].to_string();
+			let hostname = hostname[atIdx+1..].to_string();
+			return PathLocation::Remote
+			{
+				user,
+				host: hostname.to_string(),
+				path: hostPath.to_string(),
+			};
+		}
+
+		// host:path - default to current user
+		return PathLocation::Remote
+		{
+			user: String::new(),
+			host: hostname.to_string(),
+			path: hostPath.to_string(),
+		};
+	}
+
+	PathLocation::Local(path.to_string()) // If not stdin or remote, treat as local path
+}
+
 fn fsnode_open(path: &str) -> Box<dyn std::io::Read>
 {
 	use std::process::{Command,Stdio};
