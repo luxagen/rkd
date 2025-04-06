@@ -177,43 +177,129 @@ fn fsnode_open(path: &str) -> Result<Box<dyn std::io::Read>, String>
 	if "-"==path
 		{return Ok(Box::new(io::stdin().lock()));}
 
-	// Check if path exists
-	if !std::path::Path::new(path).exists()
-	{
-		return Err(format!("Path '{}' not found",path));
-	}
+	let path_location = parse_path(path);
 
-	// Handle file
-	if let Ok(metadata) = std::fs::metadata(path)
-	{
-		if !metadata.is_dir()
-		{
-			return match std::fs::File::open(path)
-			{
-				Ok(file) => Ok(Box::new(file)),
-				Err(e) => Err(format!("Failed to open file '{path}': {e}"))
+	match path_location {
+		PathLocation::Stdin => Ok(Box::new(io::stdin().lock())),
+		PathLocation::Local(local_path) => {
+			// Check if path exists
+			if !std::path::Path::new(&local_path).exists() {
+				return Err(format!("Path '{}' not found", local_path));
+			}
+
+			// Handle file
+			if let Ok(metadata) = std::fs::metadata(&local_path) {
+				if !metadata.is_dir() {
+					return match std::fs::File::open(&local_path) {
+						Ok(file) => Ok(Box::new(file)),
+						Err(e) => Err(format!("Failed to open file '{}': {}", local_path, e))
+					};
+				}
+			} else {
+				return Err(format!("Failed to get metadata for '{}'", local_path));
+			}
+
+			// Handle directory
+			let mut rk = Command::new("sudo");
+			rk.args(["rk","-rQe",&local_path]);
+			rk.stdin(Stdio::null());
+			rk.stdout(Stdio::piped());
+
+			match rk.spawn() {
+				Ok(mut child) => match child.stdout.take() {
+					Some(stdout) => Ok(Box::new(stdout)),
+					None => Err(format!("Failed to capture stdout from rk for '{}'", local_path))
+				},
+				Err(e) => Err(format!("Failed to run rk for '{}': {}", local_path, e))
+			}
+		},
+		PathLocation::Remote { user, host, path } => {
+			use std::borrow::Cow;
+			use shell_escape::escape;
+			
+			// Properly escape the path for shell safety
+			let escaped_path = escape(Cow::Borrowed(&path));
+			
+			// Build SSH command with proper user@host format
+			let target = if user.is_empty() {
+				host.clone()
+			} else {
+				format!("{}@{}", user, host)
 			};
+			
+			// Build a single command that combines path checking and fetching the content
+			// First checks if path exists, then determines if it's a file or directory,
+			// and finally either cats the file or runs rk on the directory
+			let combined_cmd = format!(
+				"if [ ! -e {escaped_path} ]; then 
+				   echo 'PATH_NOT_FOUND' >&2; 
+				   exit 1; 
+				 elif [ -f {escaped_path} ]; then 
+				   sudo cat {escaped_path}; 
+				 elif [ -d {escaped_path} ]; then 
+				   sudo rk -rQe {escaped_path}; 
+				 else 
+				   echo 'UNKNOWN_TYPE' >&2; 
+				   exit 2; 
+				 fi"
+			);
+			
+			// Create a single SSH command
+			let mut ssh_cmd = Command::new("ssh");
+			ssh_cmd.arg("-t"); // Force pseudo-terminal allocation for interactive sudo
+			ssh_cmd.arg(&target);
+			ssh_cmd.arg(combined_cmd);
+			ssh_cmd.stdin(Stdio::null());
+			ssh_cmd.stdout(Stdio::piped());
+			ssh_cmd.stderr(Stdio::piped());
+			
+			// Execute SSH command and handle the result
+			match ssh_cmd.spawn() {
+				Ok(mut child) => {
+					match child.stdout.take() {
+						Some(stdout) => {
+							// If the command fails, check stderr for the error message
+							match child.wait() {
+								Ok(exit_status) => {
+									if !exit_status.success() {
+										if let Some(mut stderr) = child.stderr.take() {
+											let mut error_msg = String::new();
+											if let Ok(_) = std::io::Read::read_to_string(&mut stderr, &mut error_msg) {
+												if error_msg.contains("PATH_NOT_FOUND") {
+													return Err(format!("Remote path '{}' not found", path));
+												} else if error_msg.contains("UNKNOWN_TYPE") {
+													return Err(format!("Remote path '{}' is not a regular file or directory", path));
+												}
+											}
+											return Err(format!("SSH command failed for remote path '{}': {}", path, error_msg));
+										}
+										return Err(format!("SSH command failed for remote path '{}'", path));
+									}
+									Ok(Box::new(stdout))
+								},
+								Err(_) => Err(format!("Failed to get exit status for remote path '{}'", path))
+							}
+						},
+						None => Err(format!("Failed to capture stdout for remote path '{}'", path))
+					}
+				},
+				Err(e) => Err(format!("Failed to establish SSH connection to {}: {}", target, e))
+			}
 		}
 	}
-	else
-	{
-		return Err(format!("Failed to get metadata for '{path}'"));
-	}
+}
 
-	// Handle directory
-	let mut rk = Command::new("sudo");
-	rk.args(["rk","-rQe",path]);
-	rk.stdin(Stdio::null());
-	rk.stdout(Stdio::piped());
-
-	match rk.spawn()
-	{
-		Ok(mut child) => match child.stdout.take()
-		{
-			Some(stdout) => Ok(Box::new(stdout)),
-			None => Err(format!("Failed to capture stdout from rk for '{path}'"))
+fn format_path_display(path_loc: &PathLocation) -> String {
+	match path_loc {
+		PathLocation::Local(path_str) => path_str.clone(),
+		PathLocation::Remote { user, host, path } => {
+			if user.is_empty() {
+				format!("{}:{}", host, path)
+			} else {
+				format!("{}@{}:{}", user, host, path)
+			}
 		},
-		Err(e) => Err(format!("Failed to run rk for '{path}': {e}"))
+		PathLocation::Stdin => "-".to_string(),
 	}
 }
 
@@ -244,16 +330,6 @@ fn main()
 	let pathL = parse_path(&args.treeL);
 	let pathR = parse_path(&args.treeR);
 
-	// Panic on remote paths
-	if let PathLocation::Remote { .. } = pathL
-	{
-		panic!("Remote paths not supported for left tree");
-	}
-	if let PathLocation::Remote { .. } = pathR
-	{
-		panic!("Remote paths not supported for right tree");
-	}
-
 	if matches!(pathL, PathLocation::Stdin) && matches!(pathR, PathLocation::Stdin)
 	{
 		use inline_colorization::*;
@@ -265,31 +341,21 @@ fn main()
 	}
 
 	// Pre-open both early so we can fail fast on bad arguments
-	let (fileL, fileR) = match (fsnode_open(&args.treeL), fsnode_open(&args.treeR))
-	{
+	let (fileL, fileR) = match (fsnode_open(&args.treeL), fsnode_open(&args.treeR)) {
 		(Ok(left), Ok(right)) => (left, right),
-		(left, right) =>
-		{
+		(left, right) => {
 			use inline_colorization::*;
 			const cbr: &str = color_bright_red;
 			const cr: &str = color_reset;
 			
 			let missing = (right.is_err() as i32) << 1 | (left.is_err() as i32);
 			
-			if left.is_err()
-			{
-				if let PathLocation::Local(path) = pathL
-				{
-					eprintln!("{cbr}[ERROR]: Left tree '{path}' not found{cr}");
-				}
+			if left.is_err() {
+				eprintln!("{cbr}[ERROR]: Left tree '{}' not found{cr}", format_path_display(&pathL));
 			}
 			
-			if right.is_err()
-			{
-				if let PathLocation::Local(path) = pathR
-				{
-					eprintln!("{cbr}[ERROR]: Right tree '{path}' not found{cr}");
-				}
+			if right.is_err() {
+				eprintln!("{cbr}[ERROR]: Right tree '{}' not found{cr}", format_path_display(&pathR));
 			}
 			
 			std::process::exit(missing);
