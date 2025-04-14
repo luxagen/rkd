@@ -1,5 +1,5 @@
 ﻿// RKD - RotKraken Delta
-// Copyright © luxagen, 2023-present
+// Copyright © luxagen, 2023-present; portions copyright © Tim Abell, 2025
 
 #![allow(nonstandard_style)]
 
