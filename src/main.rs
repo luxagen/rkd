@@ -37,7 +37,7 @@ impl Hash
 		debug_assert_eq!(32,from.len());
 
 		let mut bytes = [0u8; 16];
-		hex::decode_to_slice(from, &mut bytes).unwrap();
+		faster_hex::hex_decode(from.as_bytes(), &mut bytes).unwrap();
 		Hash(u128::from_be_bytes(bytes))
 	}
 }
@@ -48,7 +48,12 @@ impl std::fmt::Debug for Hash
 	{
 		// Convert the u128 value to bytes for hex encoding
 		let bytes = self.0.to_be_bytes();
-		write!(f,"[{}]",hex::encode(bytes))
+		let mut hex_output = [0u8; 32]; // 16 bytes -> 32 hex chars
+		faster_hex::hex_encode(&bytes, &mut hex_output).unwrap();
+		
+		// Convert the raw bytes to a str and write it
+		let hex_str = std::str::from_utf8(&hex_output).unwrap();
+		write!(f,"[{}]", hex_str)
 	}
 }
 
