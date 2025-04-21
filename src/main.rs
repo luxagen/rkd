@@ -26,12 +26,9 @@ struct Args
 }
 
 #[derive(Eq,Hash,PartialEq,Clone,Copy)]
-struct Hash
-{
-	bytes: [u8;16],
-}
+struct Hash(u128);
 
-const EMPTY_HASH: Hash = Hash { bytes: [0xd4, 0x1d, 0x8c, 0xd9, 0x8f, 0x00, 0xb2, 0x04, 0xe9, 0x80, 0x09, 0x98, 0xec, 0xf8, 0x42, 0x7e] };
+const EMPTY_HASH: Hash = Hash(0xd41d8cd98f00b204e9800998ecf8427e);
 
 impl Hash
 {
@@ -39,17 +36,9 @@ impl Hash
 	{
 		debug_assert_eq!(32,from.len());
 
-		let result: std::mem::MaybeUninit::<[u8;16]> = std::mem::MaybeUninit::uninit();
-
-		Hash
-		{
-			bytes: unsafe
-			{
-				let mut danger = result.assume_init();
-				hex::decode_to_slice(from,&mut danger).unwrap();
-				danger
-			}
-		}
+		let mut bytes = [0u8; 16];
+		hex::decode_to_slice(from, &mut bytes).unwrap();
+		Hash(u128::from_be_bytes(bytes))
 	}
 }
 
@@ -57,7 +46,9 @@ impl std::fmt::Debug for Hash
 {
 	fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result
 	{
-		write!(f,"[{}]",hex::encode(self.bytes))
+		// Convert the u128 value to bytes for hex encoding
+		let bytes = self.0.to_be_bytes();
+		write!(f,"[{}]",hex::encode(bytes))
 	}
 }
 
