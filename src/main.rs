@@ -4,7 +4,7 @@
 #![allow(nonstandard_style)]
 
 use std::io::{self,BufRead};
-use std::collections::HashMap;
+use ahash::AHashMap;
 
 static DISABLE_OUTPUT: bool = false;
 
@@ -109,8 +109,8 @@ struct Object
 	sides: [Side;2],
 }
 
-type MapPaths = HashMap<&'static str,&'static FSNode>;
-type MapHashes = HashMap<Hash,Object>;
+type MapPaths = AHashMap<&'static str,&'static FSNode>;
+type MapHashes = AHashMap<Hash,Object>;
 
 struct RKD
 {

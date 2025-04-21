@@ -21,6 +21,7 @@ lazy_static = "1.4.0"
 shell-escape = "0.1.5"
 inline_colorization = "0.1.6"
 colored = "2.0.0"
+ahash = "0.8.11"
 
 [dependencies.clap]
 version = "4.1.11"
