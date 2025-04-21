@@ -105,7 +105,7 @@ struct Side
 
 struct Object
 {
-	by: u64,
+	by: std::cell::Cell<i64>, // This is mutable because we need to blacklist on mismatch by making it negative
 	sides: [Side;2],
 }
 
@@ -310,9 +310,9 @@ impl Side
 
 impl Object
 {
-	fn new(by: u64) -> Self
+	fn new(by: i64) -> Self
 	{
-		Self{by,sides: [Side::new(),Side::new()]}
+		Self{by: std::cell::Cell::new(by),sides: [Side::new(),Side::new()]}
 	}
 }
 
@@ -437,13 +437,14 @@ impl RKD
 		}
 	}
 
-	fn make_node(&mut self,side: usize,path: &'static str,hash: Option<Hash>) -> FSNode
+	fn make_node(&mut self,side: usize,path: &'static str,hash: Option<Hash>,allow_match: bool) -> FSNode
 	{
 		debug_assert!(side<2);
 
-		if let Some(h) = hash // Cloning sets done, so don't do it for unhashables
+		// We can only match the LHS if we're processing the RHS; also don't match if e.g. there's a size mismatch
+		if allow_match && side>0
 		{
-			if side>0
+			if let Some(h) = hash // Pseudohashes are not matchable
 			{
 				return FSNode::clone_or_new(path,h,&mut self.sides[0]);
 			}
@@ -452,7 +453,7 @@ impl RKD
 		FSNode::new(path,hash)
 	}
 
-	fn insert_hash_entry<'a>(hashes: &'a mut MapHashes,hash: &Hash,by: u64) -> &'a mut Object
+	fn insert_hash_entry<'a>(hashes: &'a mut MapHashes,hash: &Hash,by: i64) -> &'a mut Object
 	{
 		if !hashes.contains_key(&hash)
 		{
@@ -462,8 +463,35 @@ impl RKD
 		}
 
 		let result = hashes.get_mut(hash).unwrap(); // TODO elide lookup when inserting
-		assert_eq!(by,result.by);
+		debug_assert_eq!(by,result.by.get()); // This should never happen since we check for size mismatches earlier
 		result
+	}
+
+	fn blacklist_size_mismatch(&self, parsed: &LogLine, ambiguousFileCount: &mut usize) -> bool
+	{
+		// If there's a real hash and it exists in our map, check if the size also matches
+		if let Some(hash) = parsed.hash
+		{
+			if let Some(obj) = self.hashes.get(&hash)
+			{
+				if obj.by.get() != parsed.by
+				{
+					eprintln!(
+						"[WARNING] File-size mismatch [{}]: {}",
+						if self.sides.len() > 0 {">"} else {"<"},
+						parsed.path,
+					);
+
+					*ambiguousFileCount += 1;
+
+					// Size mismatch - blacklist this hash
+					obj.by.set(-1);
+					return true;
+				}
+			}
+		}
+
+		false // Either there's no hash, it hasn't been seen before, or the sizes match
 	}
 
 	fn parse_side(&mut self,log: &Vec<&str>,excludes: &[String],ambiguousFileCount: &mut usize)
@@ -490,14 +518,19 @@ impl RKD
 				}
 			}
 
+			// If the incoming hash is real, and it's already registered in the hash-keyed collection, we have an 
+			// opportunity to make sure that all instances of this hash seen so far match in file size; if not, we need 
+			// to globally blacklist that hash for copy/move matching so that we don't lie about files being unchanged
+			let should_prematch = !self.blacklist_size_mismatch(&parsed,ambiguousFileCount);
+
 			let node = Box::leak(
 				Box::new(
 					self.make_node(
 						side,
 						&parsed.path,
-						parsed.hash.clone()))); // TODO improve
-
-			files.insert(parsed.path,node);
+						parsed.hash,
+						should_prematch,
+					))); // TODO improve
 
 			// An item with a pseudohash can't be entered into our hash-keyed map, which disables move/rename matching
 			if let Some(hash) = parsed.hash
@@ -505,6 +538,8 @@ impl RKD
 				let entry = Self::insert_hash_entry(&mut self.hashes,&hash,parsed.by);
 				entry.sides[side].paths.push(node);
 			}
+
+			files.insert(parsed.path,node);
 		}
 
 		self.sides.push(files);
@@ -513,7 +548,7 @@ impl RKD
 
 struct LogLine
 {
-	by: u64,
+	by: i64,
 	hash: Option<Hash>,
 	path: &'static str,
 }
@@ -609,7 +644,7 @@ impl LogLine
 		let (rest,fields) = all_consuming(
 			tuple(
 				(
-					preceded(space0,u64),
+					preceded(space0,i64),
 					preceded(tag("  "),hexhash),
 					preceded(tag("  "),preceded(opt(tag("./")),not_line_ending)),
 				)
