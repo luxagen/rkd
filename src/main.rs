@@ -736,7 +736,14 @@ impl RKD
 
 		'line_parser: for line in log 
 		{
-			let parsed = LogLine::parse(&line,ambiguousFileCount,side).unwrap().1;
+			let parsed = match LogLine::parse(&line,ambiguousFileCount,side) {
+				Ok(result) => result,
+				Err(e) => {
+					eprintln!("Error: Failed to parse log line: '{}'", line);
+					eprintln!("Expected format: <size>  <md5hash>  <filepath>");
+					panic!("Parsing error: {}", e);
+				}
+			}.1;
 
 			if parsed.is_none() {continue;}
 
