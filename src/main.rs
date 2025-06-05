@@ -260,10 +260,10 @@ fn fsnode_open(path: &str) -> Result<Box<dyn std::io::Read>, String> {
                                     if !exit_status.success() {
                                         if let Some(mut stderr) = child.stderr.take() {
                                             let mut error_msg = String::new();
-                                            if let Ok(_) = std::io::Read::read_to_string(
+                                            if std::io::Read::read_to_string(
                                                 &mut stderr,
                                                 &mut error_msg,
-                                            ) {
+                                            ).is_ok() {
                                                 if error_msg.contains("PATH_NOT_FOUND") {
                                                     return Err(format!(
                                                         "Remote path '{}' not found",
@@ -557,8 +557,8 @@ impl RKD {
 
         let mut ambiguousFileCountL = 0;
         let mut ambiguousFileCountR = 0;
-        self.parse_side(&logL, &args.exclude, &mut ambiguousFileCountL);
-        self.parse_side(&logR, &args.exclude, &mut ambiguousFileCountR);
+        self.parse_side(logL, &args.exclude, &mut ambiguousFileCountL);
+        self.parse_side(logR, &args.exclude, &mut ambiguousFileCountR);
 
         assert_eq!(self.sides.len(), 2);
 
@@ -660,10 +660,7 @@ impl RKD {
 
             // Build a reference list for LHS, including done items (i.e. make a "possible cp/mv sources" list)
             let mut pathsL = obj.sides[0]
-                .paths
-                .iter()
-                .map(|nodeL| *nodeL)
-                .collect::<Vec<_>>();
+                .paths.to_vec();
 
             if pathsL.is_empty() {
                 continue;
@@ -704,8 +701,8 @@ impl RKD {
     }
 
     fn insert_hash_entry<'a>(hashes: &'a mut MapHashes, hash: &Hash, by: i64) -> &'a mut Object {
-        if !hashes.contains_key(&hash) {
-            hashes.insert(hash.clone(), Object::new(by));
+        if !hashes.contains_key(hash) {
+            hashes.insert(*hash, Object::new(by));
         }
 
         let result = hashes.get_mut(hash).unwrap(); // TODO elide lookup when inserting
@@ -724,7 +721,7 @@ impl RKD {
 
                     eprintln!(
                         "{cby}[WARNING] File-size mismatch [{}]: {}{cr}",
-                        if self.sides.len() > 0 { ">" } else { "<" },
+                        if !self.sides.is_empty() { ">" } else { "<" },
                         parsed.path,
                     );
 
@@ -752,7 +749,7 @@ impl RKD {
         let mut files = MapPaths::new();
 
         'line_parser: for line in log {
-            let parsed = LogLine::parse(&line, ambiguousFileCount, side).unwrap().1;
+            let parsed = LogLine::parse(line, ambiguousFileCount, side).unwrap().1;
 
             if parsed.is_none() {
                 continue;
@@ -773,7 +770,7 @@ impl RKD {
 
             let node = Box::leak(Box::new(self.make_node(
                 side,
-                &parsed.path,
+                parsed.path,
                 parsed.hash,
                 should_prematch,
             ))); // TODO improve
@@ -839,9 +836,9 @@ fn hexhash(input: &str) -> nom::IResult<&str, Option<Hash>> {
         return Err(Failure(ParseError::from_error_kind(input, HexDigit)));
     }
 
-    match hexhash_good(&input) {
+    match hexhash_good(input) {
         Ok((r, strHash)) => Ok((r, Some(Hash::new(strHash)))),
-        Err(_) => match hexhash_bad(&input) {
+        Err(_) => match hexhash_bad(input) {
             Ok((r, _sc)) => Ok((r, None)),
             Err(e) => Err(e),
         },
@@ -960,10 +957,10 @@ fn prefix_match_len<I: Iterator<Item = char>>(mut l: I, mut r: I) -> usize {
             break;
         }
 
-        count = 1 + count;
+        count += 1;
     }
 
-    return count;
+    count
 }
 
 ////////////////////////////////////////////////////////////////////////////////
